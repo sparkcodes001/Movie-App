@@ -13,7 +13,7 @@ export default function HomePage({ categories, type }) {
 
   const page = Number(searchParams.get("page")) || 1;
   const query = searchParams.get("query") || "";
-  const year = searchParams.get("year") || ""; // ❌ removed 2026 default
+  const year = searchParams.get("year") || "";
   const genre = searchParams.get("genre") || "";
 
   // LOAD MOVIES
@@ -22,15 +22,16 @@ export default function HomePage({ categories, type }) {
       setLoading(true);
 
       try {
-        const data = query
-          ? await searchContent({ query, type, page, year })
-          : await getContent({
-              page,
-              type,
-              category: categories,
-              year,
-              genre,
-            });
+        const data =
+          query && !genre
+            ? await searchContent({ query, type, page, year })
+            : await getContent({
+                page,
+                type,
+                category: categories,
+                year,
+                genre,
+              });
 
         setMovies(data.results || []);
         setTotalPages(data.total_pages || 1);
@@ -54,6 +55,27 @@ export default function HomePage({ categories, type }) {
     });
   };
 
+  const getPageNum = () => {
+    const pages = [];
+
+    if (page > 2) {
+      pages.push(1, "...");
+    }
+
+    const start = Math.max(1, page - 1);
+    const end = Math.min(totalPages, page + 1);
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (page < totalPages) {
+      pages.push("...", totalPages);
+    }
+
+    return pages;
+  };
+
   // SEARCH
   const handleSearch = (e) => {
     e.preventDefault();
@@ -70,6 +92,14 @@ export default function HomePage({ categories, type }) {
   if (!loading && movies.length === 0) {
     return <p className="text-center text-gray-400 mt-10">No results</p>;
   }
+
+  const currentYear = new Date().getFullYear();
+  const startYear = 2000;
+
+  const years = Array.from(
+    { length: currentYear - startYear + 1 },
+    (_, i) => currentYear - i,
+  );
 
   return (
     <div className="p-4">
@@ -88,39 +118,60 @@ export default function HomePage({ categories, type }) {
       </form>
 
       {/* FILTERS */}
-      <div className="flex justify-center gap-3 mb-6">
-        <select
-          value={year}
-          onChange={(e) => {
-            const params = Object.fromEntries(searchParams.entries());
-            setSearchParams({
-              ...params,
-              year: e.target.value,
-              page: 1,
-            });
-          }}
-        >
-          <option value="">All Years</option>
-          <option value="2024">2024</option>
-          <option value="2023">2023</option>
-        </select>
+      <div className="flex flex-wrap justify-center gap-4 mb-8">
+        {/* YEAR */}
+        <div className="relative">
+          <select
+            value={year}
+            onChange={(e) => {
+              const params = Object.fromEntries(searchParams.entries());
+              setSearchParams({
+                ...params,
+                year: e.target.value,
+                page: 1,
+              });
+            }}
+            className="appearance-none bg-black/70 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
+          >
+            <option value="">All Years</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
 
-        <select
-          value={genre}
-          onChange={(e) => {
-            const params = Object.fromEntries(searchParams.entries());
-            setSearchParams({
-              ...params,
-              genre: e.target.value,
-              page: 1,
-            });
-          }}
-        >
-          <option value="">All Genres</option>
-          <option value="28">Action</option>
-          <option value="35">Comedy</option>
-          <option value="18">Drama</option>
-        </select>
+          {/* Custom Arrow */}
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            ▼
+          </span>
+        </div>
+
+        {/* GENRE */}
+        <div className="relative">
+          <select
+            value={genre}
+            onChange={(e) => {
+              const params = Object.fromEntries(searchParams.entries());
+              setSearchParams({
+                ...params,
+                genre: e.target.value,
+                page: 1,
+              });
+            }}
+            className="appearance-none bg-black/50 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
+          >
+            <option value="">All Genres</option>
+            <option value="28">Action</option>
+            <option value="35">Comedy</option>
+            <option value="18">Drama</option>
+          </select>
+
+          {/* Custom Arrow */}
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            ▼
+          </span>
+        </div>
       </div>
 
       {/* MOVIES */}
@@ -131,22 +182,43 @@ export default function HomePage({ categories, type }) {
       </div>
 
       {/* PAGINATION */}
-      <div className="flex justify-center mt-6 gap-3">
-        <button
-          disabled={page === 1}
-          onClick={() => handlePageChange(page - 1)}
-        >
-          Prev
-        </button>
 
-        <span>{page}</span>
+      <div className="sticky bottom-3 flex justify-center p-2 mt-2">
+        <div className="flex items-center gap-3 backdrop-blur-lg shadow shadow-black/50 border border-gray-800 px-4 py-2 rounded-xl bg-black/40">
+          <button
+            disabled={page === 1}
+            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 p-2 rounded-md active:scale-x-90 transition-all"
+            onClick={() => handlePageChange(page - 1)}
+          >
+            ⬅ Prev
+          </button>
 
-        <button
-          disabled={page === totalPages}
-          onClick={() => handlePageChange(page + 1)}
-        >
-          Next
-        </button>
+          <div className="flex gap-2">
+            {getPageNum().map((p, i) =>
+              p === "..." ? (
+                <span key={i}>...</span>
+              ) : (
+                <button
+                  className={`px-2 py-1 rounded ${
+                    p === page ? "bg-red-600 text-white" : "bg-gray-800"
+                  }`}
+                  key={i}
+                  onClick={() => handlePageChange(p)}
+                >
+                  {p}
+                </button>
+              ),
+            )}
+          </div>
+
+          <button
+            disabled={page === totalPages}
+            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 p-2 rounded-md active:scale-x-90 transition-all"
+            onClick={() => handlePageChange(page + 1)}
+          >
+            Next ➡
+          </button>
+        </div>
       </div>
     </div>
   );

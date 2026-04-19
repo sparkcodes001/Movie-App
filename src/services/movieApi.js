@@ -10,17 +10,25 @@ async function fetchData(url) {
 
 // Get content (movies/tv)
 export async function getContent({ page = 1, type, category, year, genre }) {
-  let url = `${BASE_URL}/${type}/${category}?api_key=${API_KEY}&page=${page}`;
+  let url;
 
-  if (year) {
-    url +=
-      type === "movie"
-        ? `&primary_release_year=${year}`
-        : `&first_air_date_year=${year}`;
-  }
+  // ✅ USE DISCOVER WHEN FILTERING
+  if (year || genre) {
+    url = `${BASE_URL}/discover/${type}?api_key=${API_KEY}&page=${page}`;
 
-  if (genre) {
-    url += `&with_genres=${genre}`;
+    if (year) {
+      url +=
+        type === "movie"
+          ? `&primary_release_year=${year}`
+          : `&first_air_date_year=${year}`;
+    }
+
+    if (genre) {
+      url += `&with_genres=${genre}`;
+    }
+  } else {
+    // ✅ NORMAL CATEGORY (popular, top_rated, etc.)
+    url = `${BASE_URL}/${type}/${category}?api_key=${API_KEY}&page=${page}`;
   }
 
   return fetchData(url);
