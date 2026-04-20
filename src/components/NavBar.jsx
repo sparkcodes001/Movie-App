@@ -19,25 +19,25 @@ export default function Navbar({ setCategories, setType }) {
   const [openTvShow, setOpenTvShow] = useState(false);
 
   return (
-    <nav className="sticky top-0 backdrop-blur z-50 bg-black/60 border-b border-b-gray-500 ">
+    <nav className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-gray-800">
       <div className="flex justify-between items-center px-2 py-3">
         {/* Logo */}
         <div
           onClick={() => navigate("/")}
-          className="font-black text-blue-500 md:text-2xl text-lg"
+          className="font-black text-cyan-400 md:text-xl text-lg"
         >
           🎬 MovieLab
         </div>
 
         {/* Actions btn for BIG-SCREEN */}
-        <div className="hidden md:flex gap-6">
+        <div className="hidden md:flex gap-5">
           {/* Movies */}
           <div className="relative group">
             <button className="p-2 hover:text-blue-400 text-lg">
               Movies ▾
             </button>
 
-            <ul className="invisible opacity-0 absolute top-12 group-hover:visible group-hover:opacity-100 flex flex-col bg-gray-900 p-2 text-nowrap rounded-md space-y-1 z-50 transition-all">
+            <ul className="invisible opacity-0 absolute top-12 group-hover:visible flex flex-col bg-gray-900 p-2 text-nowrap rounded-md space-y-1 z-50 transition-all group-hover:opacity-100 group-hover:transition-all group-hover:duration-300">
               {["popular", "top_rated", "upcoming", "now_playing"].map(
                 (item) => (
                   <li
@@ -58,7 +58,7 @@ export default function Navbar({ setCategories, setType }) {
               Tv-Shows ▾
             </button>
 
-            <ul className="invisible opacity-0 absolute top-12 group-hover:visible group-hover:opacity-100 flex flex-col bg-gray-900 p-2 text-nowrap rounded-md space-y-1 z-50 transition-all">
+            <ul className="invisible opacity-0 absolute top-12 group-hover:visible flex flex-col bg-gray-900 p-2 text-nowrap rounded-md space-y-1 z-50 transition-all group-hover:opacity-100 group-hover:transition-all group-hover:duration-300">
               {["popular", "top_rated", "on_the_air", "airing_today"].map(
                 (item) => (
                   <li
@@ -76,12 +76,12 @@ export default function Navbar({ setCategories, setType }) {
           <div className="flex gap-5 items-center">
             <Link
               to={"/fav"}
-              className="p-2 bg-gray-800 backdrop-blur border border-gray-600 rounded-md hover:bg-gray-900 transition-all text-center"
+              className="p-2 px-3 bg-gray-800 backdrop-blur  rounded-md hover:bg-slate-700 transition-all text-center"
             >
               Favorites
             </Link>
 
-            <button className="p-2 bg-blue-500 rounded-md hover:bg-sky-600 transition-all">
+            <button className="p-2 px-3 bg-sky-500 rounded-md hover:bg-sky-600 transition-all">
               Log-Out
             </button>
           </div>

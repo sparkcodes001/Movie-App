@@ -134,7 +134,7 @@ export default function HomePage({ categories, type }) {
                 page: 1,
               });
             }}
-            className="appearance-none bg-black/70 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
+            className="appearance-none bg-black/80 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
           >
             <option value="">All Years</option>
             {years.map((y) => (
@@ -162,7 +162,7 @@ export default function HomePage({ categories, type }) {
                 page: 1,
               });
             }}
-            className="appearance-none bg-black/50 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
+            className="appearance-none bg-black/80 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
           >
             <option value="">All Genres</option>
             <option value="28">Action</option>
