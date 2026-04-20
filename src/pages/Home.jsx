@@ -186,7 +186,7 @@ export default function HomePage({ categories, type }) {
 
       {/* PAGINATION */}
 
-      <div className="sticky bottom-1 flex justify-center pb-4 mt-2 md:bottom-3">
+      <div className="sticky bottom-2 flex justify-center mt-2 md:bottom-3">
         <div className="flex items-center gap-3 backdrop-blur-lg shadow shadow-black/50 border border-gray-800 md:px-4 md:py-2 py-1 px-1 rounded-xl bg-black/40">
           <button
             disabled={page === 1}
