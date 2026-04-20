@@ -12,7 +12,7 @@ export default function FavoritePage({ type }) {
     );
 
   return (
-    <div className="grid grid-cols-2 gap-4 absolutejustify-center p-4 md:grid-cols-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-gray-900 via-black to-gray-800">
       {favorites.map((movie) => (
         <MovieCard key={movie.id} movie={movie} type={type} />
       ))}

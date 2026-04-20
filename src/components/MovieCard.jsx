@@ -16,7 +16,7 @@ export function MovieCard({ movie, type }) {
   }
 
   return (
-    <div className="relative overflow-hidden text-white bg-gray-900 border border-gray-700 rounded-lg shadow-md transition-all">
+    <div className="relative overflow-hidden text-white bg-gray-900 border border-gray-700 rounded-lg shadow-md transition-transform hover:scale-105 duration-300">
       <img
         src={
           movie.poster_path
@@ -24,11 +24,11 @@ export function MovieCard({ movie, type }) {
             : "no-image.png"
         }
         alt={movie.name || movie.title}
-        className="object-cover w-full h-80"
+        className="object-cover w-full h-60 sm:h-72 md:h-80"
       />
 
-      <div className="p-3">
-        <h2 className="text-lg font-semibold">
+      <div className="p-2 sm:p-3">
+        <h2 className="text-sm sm:text-base md:text-lg font-semibold">
           <p>{movie.name || movie.title}</p>
         </h2>
         <p className="text-sm text-gray-400 mt-2">⭐ {movie.vote_average}</p>
@@ -49,7 +49,7 @@ export function MovieCard({ movie, type }) {
       </button>
 
       <button
-        className="p-1 text-sm text-sky-400 px-2 rounded-2xl absolute right-2 bottom-1 hover:text-sky-500"
+        className="text-xs sm:text-sm text-sky-400 px-2 absolute right-2 bottom-2"
         onClick={() => navigate(`/${type}/${movie.id}`)}
       >
         More Info →

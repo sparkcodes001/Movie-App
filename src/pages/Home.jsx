@@ -6,10 +6,13 @@ import { useSearchParams } from "react-router-dom";
 
 export default function HomePage({ categories, type }) {
   const [movies, setMovies] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadMore, setLoadMore] = useState(false);
+
+  // SERACH STATES
   const [searchInput, setSearchInput] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const page = Number(searchParams.get("page")) || 1;
   const query = searchParams.get("query") || "";
@@ -106,7 +109,7 @@ export default function HomePage({ categories, type }) {
       <Loader loading={loading} />
 
       {/* SEARCH */}
-      <form onSubmit={handleSearch} className="flex justify-center mb-6 gap-2">
+      <form onSubmit={handleSearch} className="flex justify-center mb-6 mt-3 gap-2">
         <input
           type="text"
           placeholder="Search..."
@@ -175,7 +178,7 @@ export default function HomePage({ categories, type }) {
       </div>
 
       {/* MOVIES */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
         {movies.map((movie) => (
           <MovieCard key={movie.id} movie={movie} type={type} />
         ))}
@@ -183,23 +186,23 @@ export default function HomePage({ categories, type }) {
 
       {/* PAGINATION */}
 
-      <div className="sticky bottom-3 flex justify-center p-2 mt-2">
-        <div className="flex items-center gap-3 backdrop-blur-lg shadow shadow-black/50 border border-gray-800 px-4 py-2 rounded-xl bg-black/40">
+      <div className="sticky bottom-1 flex justify-center pb-4 mt-2 md:bottom-3">
+        <div className="flex items-center gap-3 backdrop-blur-lg shadow shadow-black/50 border border-gray-800 md:px-4 md:py-2 py-1 px-1 rounded-xl bg-black/40">
           <button
             disabled={page === 1}
-            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 p-2 rounded-md active:scale-x-90 transition-all"
+            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 md:p-2 p-1 rounded-md active:scale-x-90 transition-all"
             onClick={() => handlePageChange(page - 1)}
           >
             ⬅ Prev
           </button>
 
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {getPageNum().map((p, i) =>
               p === "..." ? (
                 <span key={i}>...</span>
               ) : (
                 <button
-                  className={`px-2 py-1 rounded ${
+                  className={`md:px-2 px-1 md:py-1 rounded ${
                     p === page ? "bg-red-600 text-white" : "bg-gray-800"
                   }`}
                   key={i}
@@ -213,7 +216,7 @@ export default function HomePage({ categories, type }) {
 
           <button
             disabled={page === totalPages}
-            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 p-2 rounded-md active:scale-x-90 transition-all"
+            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 md:p-2 p-1 rounded-md active:scale-x-90 transition-all"
             onClick={() => handlePageChange(page + 1)}
           >
             Next ➡
