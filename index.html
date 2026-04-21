@@ -2,28 +2,46 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- COOL NEW ICON (Sleek Cyan Play Button) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2306b6d4'><path d='M8 5.14v14l11-7-11-7z'/></svg>" />
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Basic Icons -->
-    <link
-      href="https://cdn.boxicons.com/3.0.8/fonts/basic/boxicons.min.css"
-      rel="stylesheet"
-    />
-    <!-- Filled Icons -->
-    <link
-      href="https://cdn.boxicons.com/3.0.8/fonts/filled/boxicons-filled.min.css"
-      rel="stylesheet"
-    />
-    <!-- Brand Icons -->
-    <link
-      href="https://cdn.boxicons.com/3.0.8/fonts/brands/boxicons-brands.min.css"
-      rel="stylesheet"
-    />
-    <title>movie-website</title>
+    
+    <!-- THE BEST TITLE: Cinematic & Professional -->
+    <title>MovieLab — Explore Your Next Favorite Story</title>
+
+    <!-- Google Font: Plus Jakarta Sans (Modern & Clean) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+    <!-- Boxicons (Existing) -->
+    <link href="https://cdn.boxicons.com/3.0.8/fonts/basic/boxicons.min.css" rel="stylesheet" />
+    <link href="https://cdn.boxicons.com/3.0.8/fonts/filled/boxicons-filled.min.css" rel="stylesheet" />
+    
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+      /* Smooth Scrolling for the whole site */
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Custom Selection Color */
+      ::selection {
+        background: rgba(6, 182, 212, 0.3);
+        color: white;
+      }
+    </style>
   </head>
+
   <body
-    class="min-h-screen bg-cover bg-center bg-no-repeat bg-gradient-to-br from-gray-900 via-black/95 to-gray-950 text-white overflow-x-hidden"
+    class="min-h-screen bg-black text-white overflow-x-hidden selection:bg-cyan-500/30"
   >
+    <!-- GRADIENT OVERLAY (For that Cinematic Depth) -->
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-950 -z-10"></div>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
