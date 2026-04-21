@@ -1,59 +1,58 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("currentUser");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // Added loading state to avoid flickers
 
-  // note: SignUp
-  function signUp({ name, email, password }) {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const newUser = { name, email, password };
+  useEffect(() => {
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    if (users.find((u) => u.email === email)) {
-      return { success: false, error: "Email already exist" };
-    }
+    // Listen for changes on auth state (logged in, signed out, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-    localStorage.setItem("currentUser", JSON.stringify(newUser))
-    setUser(newUser)
+    return () => subscription.unsubscribe();
+  }, []);
 
-    return { success: true };
+  async function signUp({ email, password, name }) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: name },
+      },
+    });
+    return { data, error };
   }
 
-  // note: LogIn
-  function logIn({ email, password }) {
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const currentUser = users.find(
-      (u) => u.email === email && u.password === password,
-    );
-
-    if (!currentUser) {
-      return { success: false, error: "Invalid email or password" };
-    }
-
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
-    setUser(currentUser);
-
-    return { success: true };
+  async function logIn({ email, password }) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { data, error };
   }
 
-  function logOut() {
-    setUser(null)
-    localStorage.removeItem("currentUser")
+  async function logOut() {
+    await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ user, signUp, logIn, logOut }}>
-      {children}
+    <AuthContext.Provider value={{ user, signUp, logIn, logOut, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);

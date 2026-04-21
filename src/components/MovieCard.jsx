@@ -1,59 +1,63 @@
 import { useNavigate } from "react-router-dom";
 import { useMovies } from "../context/MovieContext";
+import { Star, Info, Heart } from "lucide-react";
 
 export function MovieCard({ movie, type }) {
   const { favorites, addFavorite, removeFavorite } = useMovies();
   const navigate = useNavigate();
-
   const isFavorite = favorites.some((m) => m.id === movie.id);
 
-  function handleFavorite() {
-    if (isFavorite) {
-      removeFavorite(movie.id);
-    } else {
-      addFavorite(movie);
-    }
-  }
-
   return (
-    <div className="relative overflow-hidden text-white bg-gray-900 border border-gray-700 rounded-lg shadow-md transition-transform hover:scale-105 duration-300">
-      <img
-        src={
-          movie.poster_path
-            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-            : "no-image.png"
-        }
-        alt={movie.name || movie.title}
-        className="object-cover w-full h-60 sm:h-72 md:h-80"
-      />
+    <div className="group relative bg-gray-900 rounded-2xl overflow-hidden border border-white/5 transition-all duration-500 hover:scale-[1.03] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+      {/* Image Container */}
+      <div className="relative aspect-[2/3]">
+        <img
+          src={
+            movie.poster_path
+              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+              : "/placeholder.png"
+          }
+          alt={movie.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent opacity-80" />
 
-      <div className="p-2 sm:p-3">
-        <h2 className="text-sm sm:text-base md:text-lg font-semibold">
-          <p>{movie.name || movie.title}</p>
-        </h2>
-        <p className="text-sm text-gray-400 mt-2">⭐ {movie.vote_average}</p>
+        {/* Top Actions */}
+        <button
+          onClick={() =>
+            isFavorite ? removeFavorite(movie.id) : addFavorite(movie)
+          }
+          className={`absolute top-3 right-3 p-2.5 rounded-full backdrop-blur-md transition-all ${
+            isFavorite
+              ? "bg-red-600 text-white"
+              : "bg-black/40 text-white/70 hover:bg-black/60"
+          }`}
+        >
+          <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
+        </button>
       </div>
 
-      {/* Favorite Button */}
-      <button
-        onClick={handleFavorite}
-        className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md border transition-all duration-300 
-        ${
-          isFavorite
-            ? "bg-red-500/80 border-red-400 shadow-md shadow-red-500/40"
-            : "bg-white/10 border-white/20 hover:bg-white/20"
-        }
-      `}
-      >
-        <span className="text-white text-lg">❤️</span>
-      </button>
+      {/* Content */}
+      <div className="p-4">
+        <h2 className="font-bold text-white line-clamp-1 group-hover:text-cyan-400 transition-colors">
+          {movie.name || movie.title}
+        </h2>
 
-      <button
-        className="text-xs sm:text-sm text-sky-400 px-2 absolute right-2 bottom-2"
-        onClick={() => navigate(`/${type}/${movie.id}`)}
-      >
-        More Info →
-      </button>
+        <div className="flex items-center justify-between mt-3">
+          <span className="flex items-center gap-1 text-yellow-500 text-sm font-bold">
+            <Star size={14} fill="currentColor" />{" "}
+            {movie.vote_average?.toFixed(1)}
+          </span>
+
+          <button
+            onClick={() => navigate(`/${type}/${movie.id}`)}
+            className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-cyan-500 hover:text-cyan-400 transition-colors"
+          >
+            Details <Info size={14} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

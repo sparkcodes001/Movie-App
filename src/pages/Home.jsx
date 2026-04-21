@@ -3,38 +3,69 @@ import { getContent, searchContent } from "../services/movieApi";
 import { MovieCard } from "../components/MovieCard";
 import { Loader } from "../components/Loader";
 import { useSearchParams } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 
 export default function HomePage({ categories, type }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [loadMore, setLoadMore] = useState(false);
-
-  // SERACH STATES
-  const [searchInput, setSearchInput] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // URL Params
   const page = Number(searchParams.get("page")) || 1;
   const query = searchParams.get("query") || "";
   const year = searchParams.get("year") || "";
   const genre = searchParams.get("genre") || "";
 
-  // LOAD MOVIES
+  // Local state for the input field
+  const [searchInput, setSearchInput] = useState(query);
+
+  // Sync input field with URL (e.g., when clicking logo or going back)
+  useEffect(() => {
+    setSearchInput(query);
+  }, [query]);
+
+  // 1. IMPROVED: Handle Filter Changes
+  const handleFilterChange = (key, value) => {
+    const params = Object.fromEntries(searchParams.entries());
+
+    if (value) {
+      params[key] = value;
+    } else {
+      delete params[key];
+    }
+
+    // If we are filtering by genre/year, clear the text search to avoid API conflicts
+    if (key === "genre" || key === "year") {
+      delete params.query;
+      setSearchInput("");
+    }
+
+    params.page = 1;
+    setSearchParams(params);
+  };
+
+  // 2. FIXED: Fetching Logic
   useEffect(() => {
     async function loadMovies() {
       setLoading(true);
-
       try {
-        const data =
-          query && !genre
-            ? await searchContent({ query, type, page, year })
-            : await getContent({
-                page,
-                type,
-                category: categories,
-                year,
-                genre,
-              });
+        let data;
+
+        // If there is a search query, prioritize Search API
+        if (query) {
+          data = await searchContent({ query, type, page, year });
+        }
+        // Otherwise, use the Discover/Category API (Genre + Year)
+        else {
+          data = await getContent({
+            page,
+            type,
+            category: categories,
+            year,
+            genre,
+          });
+        }
 
         setMovies(data.results || []);
         setTotalPages(data.total_pages || 1);
@@ -44,185 +75,200 @@ export default function HomePage({ categories, type }) {
         setLoading(false);
       }
     }
-
     loadMovies();
   }, [page, categories, type, query, year, genre]);
 
-  // PAGINATION
-  const handlePageChange = (newPage) => {
+  const handleSearch = (e) => {
+    e.preventDefault();
     const params = Object.fromEntries(searchParams.entries());
 
-    setSearchParams({
-      ...params,
-      page: newPage,
-    });
+    if (searchInput) {
+      params.query = searchInput;
+      delete params.genre; // Clear genre when searching text
+    } else {
+      delete params.query;
+    }
+
+    params.page = 1;
+    setSearchParams(params);
+  };
+
+  const handlePageChange = (newPage) => {
+    const params = Object.fromEntries(searchParams.entries());
+    params.page = newPage;
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const getPageNum = () => {
     const pages = [];
-
-    if (page > 2) {
-      pages.push(1, "...");
-    }
-
-    const start = Math.max(1, page - 1);
-    const end = Math.min(totalPages, page + 1);
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (page < totalPages) {
-      pages.push("...", totalPages);
-    }
-
+    const delta = window.innerWidth < 640 ? 1 : 1;
+    pages.push(1);
+    if (page > delta + 2) pages.push("...");
+    const start = Math.max(2, page - delta);
+    const end = Math.min(totalPages - 1, page + delta);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (page < totalPages - (delta + 1)) pages.push("...");
+    if (totalPages > 1) pages.push(totalPages);
     return pages;
   };
 
-  // SEARCH
-  const handleSearch = (e) => {
-    e.preventDefault();
-
-    const params = Object.fromEntries(searchParams.entries());
-
-    setSearchParams({
-      ...params,
-      query: searchInput,
-      page: 1,
-    });
-  };
-
-  if (!loading && movies.length === 0) {
-    return <p className="text-center text-gray-400 mt-10">No results</p>;
-  }
-
   const currentYear = new Date().getFullYear();
-  const startYear = 2000;
-
   const years = Array.from(
-    { length: currentYear - startYear + 1 },
+    { length: currentYear - 1999 },
     (_, i) => currentYear - i,
   );
 
   return (
-    <div className="p-4">
+    <div className="min-h-screen bg-transparent text-white pb-32">
       <Loader loading={loading} />
 
-      {/* SEARCH */}
-      <form onSubmit={handleSearch} className="flex justify-center mb-6 mt-3 gap-2">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="bg-black text-white px-3 py-2 rounded"
-        />
-        <button className="bg-red-600 px-3 py-1 rounded">🔍</button>
-      </form>
+      {/* HERO / SEARCH */}
+      <div className="max-w-4xl mx-auto px-4 pt-10 pb-6 text-center">
+        <h1 className="text-4xl md:text-6xl font-black mb-8 italic tracking-tighter">
+          DISCOVER<span className="text-cyan-500">LAB</span>
+        </h1>
 
-      {/* FILTERS */}
-      <div className="flex flex-wrap justify-center gap-4 mb-8">
-        {/* YEAR */}
-        <div className="relative">
-          <select
-            value={year}
-            onChange={(e) => {
-              const params = Object.fromEntries(searchParams.entries());
-              setSearchParams({
-                ...params,
-                year: e.target.value,
-                page: 1,
-              });
-            }}
-            className="appearance-none bg-black/80 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
-          >
-            <option value="">All Years</option>
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-
-          {/* Custom Arrow */}
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-            ▼
-          </span>
-        </div>
-
-        {/* GENRE */}
-        <div className="relative">
-          <select
-            value={genre}
-            onChange={(e) => {
-              const params = Object.fromEntries(searchParams.entries());
-              setSearchParams({
-                ...params,
-                genre: e.target.value,
-                page: 1,
-              });
-            }}
-            className="appearance-none bg-black/80 text-white border border-gray-700 px-4 py-2 pr-10 rounded-xl backdrop-blur-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 hover:border-gray-500 transition-all"
-          >
-            <option value="">All Genres</option>
-            <option value="28">Action</option>
-            <option value="35">Comedy</option>
-            <option value="18">Drama</option>
-          </select>
-
-          {/* Custom Arrow */}
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-            ▼
-          </span>
-        </div>
-      </div>
-
-      {/* MOVIES */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
-        {movies.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} type={type} />
-        ))}
-      </div>
-
-      {/* PAGINATION */}
-
-      <div className="sticky bottom-2 flex justify-center mt-2 md:bottom-3">
-        <div className="flex items-center gap-3 backdrop-blur-lg shadow shadow-black/50 border border-gray-800 md:px-4 md:py-2 py-1 px-1 rounded-xl bg-black/40">
-          <button
-            disabled={page === 1}
-            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 md:p-2 p-1 rounded-md active:scale-x-90 transition-all"
-            onClick={() => handlePageChange(page - 1)}
-          >
-            ⬅ Prev
-          </button>
-
-          <div className="flex gap-1">
-            {getPageNum().map((p, i) =>
-              p === "..." ? (
-                <span key={i}>...</span>
-              ) : (
-                <button
-                  className={`md:px-2 px-1 md:py-1 rounded ${
-                    p === page ? "bg-red-600 text-white" : "bg-gray-800"
-                  }`}
-                  key={i}
-                  onClick={() => handlePageChange(p)}
-                >
-                  {p}
-                </button>
-              ),
+        <form
+          onSubmit={handleSearch}
+          className="relative max-w-2xl mx-auto flex flex-col sm:flex-row gap-3"
+        >
+          {/* Input Wrapper */}
+          <div className="relative flex-1 flex items-center bg-white/5 border border-white/10 rounded-2xl px-4 focus-within:ring-2 focus-within:ring-cyan-500/50 backdrop-blur-md transition-all">
+            <Search className="text-gray-500" size={20} />
+            <input
+              type="text"
+              placeholder="Search movies or TV shows..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full bg-transparent border-none px-4 py-4 focus:outline-none text-white placeholder:text-gray-600 text-base"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearchParams({});
+                }}
+                className="p-2 text-gray-500 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
             )}
           </div>
 
+          {/* THE SEARCH BUTTON */}
           <button
-            disabled={page === totalPages}
-            className="bg-gradient-to-tl from-gray-700 via-gray-950 to-gray-700 md:p-2 p-1 rounded-md active:scale-x-90 transition-all"
-            onClick={() => handlePageChange(page + 1)}
+            type="submit"
+            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-2"
           >
-            Next ➡
+            <Search size={18} />
+            <span>Search</span>
+          </button>
+        </form>
+      </div>
+
+      {/* FILTERS */}
+      <div className="flex flex-wrap justify-center gap-3 mb-10 px-4">
+        <select
+          value={year}
+          onChange={(e) => handleFilterChange("year", e.target.value)}
+          className="bg-gray-950 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-cyan-500 text-sm cursor-pointer hover:bg-gray-900 transition-colors"
+        >
+          <option value="">All Years</option>
+          {years.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={genre}
+          onChange={(e) => handleFilterChange("genre", e.target.value)}
+          className="bg-gray-950 border border-white/10 rounded-xl px-4 py-2 outline-none focus:border-cyan-500 text-sm cursor-pointer hover:bg-gray-900 transition-colors"
+        >
+          <option value="">All Genres</option>
+          <option value="28">Action</option>
+          <option value="35">Comedy</option>
+          <option value="18">Drama</option>
+          <option value="27">Horror</option>
+          <option value="10749">Romance</option>
+          <option value="878">Sci-Fi</option>
+          <option value="16">Animation</option>
+        </select>
+      </div>
+
+      {/* GRID / EMPTY STATE */}
+      {movies.length === 0 && !loading ? (
+        <div className="flex flex-col items-center justify-center py-20 opacity-50">
+          <Search size={48} className="mb-4 text-gray-600" />
+          <p className="text-xl font-medium">No movies found.</p>
+          <button
+            onClick={() => setSearchParams({})}
+            className="mt-2 text-cyan-500 hover:underline"
+          >
+            Clear all filters
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4">
+          {movies.map((movie) => (
+            <MovieCard key={movie.id} movie={movie} type={type} />
+          ))}
+        </div>
+      )}
+
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-2 pointer-events-none">
+          <div className="flex items-center gap-1 bg-black/80 backdrop-blur-2xl border border-white/10 p-1.5 rounded-full shadow-2xl pointer-events-auto">
+            {/* PREV BUTTON */}
+            <button
+              disabled={page === 1}
+              onClick={() => handlePageChange(page - 1)}
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-gray-400 hover:text-cyan-400 hover:bg-white/5 disabled:opacity-0 transition-all"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            {/* NUMBERS */}
+            <div className="flex items-center gap-1">
+              {getPageNum().map((p, i) => (
+                <button
+                  key={i}
+                  disabled={p === "..."}
+                  onClick={() => typeof p === "number" && handlePageChange(p)}
+                  className={`
+              relative flex items-center justify-center transition-all duration-300 font-bold
+              ${p === "..." ? "w-4 sm:w-8 cursor-default text-gray-600" : "w-9 h-9 sm:w-11 sm:h-11 rounded-full text-xs sm:text-sm"}
+              ${
+                p === page
+                  ? "text-cyan-400 bg-cyan-400/10"
+                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
+              }
+            `}
+                >
+                  {p}
+                  {/* Active Glow Dot */}
+                  {p === page && (
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_#22d3ee]" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* NEXT BUTTON */}
+            <button
+              disabled={page === totalPages}
+              onClick={() => handlePageChange(page + 1)}
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-gray-400 hover:text-cyan-400 hover:bg-white/5 disabled:opacity-0 transition-all"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
