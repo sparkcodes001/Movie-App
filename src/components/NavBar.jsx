@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, Heart, Film, Tv, ChevronDown } from "lucide-react";
+import { Menu, X, LogOut, Heart, Film, Tv, ChevronDown, TvMinimalPlayIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

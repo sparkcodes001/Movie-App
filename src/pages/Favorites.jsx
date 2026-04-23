@@ -23,9 +23,9 @@ export default function FavoritePage({ type }) {
         </p>
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-cyan-600/20"
+          className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-cyan-600/20 group"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
           Browse Movies
         </button>
       </div>
@@ -37,7 +37,7 @@ export default function FavoritePage({ type }) {
       {/* 1. TOP NAVIGATION BAR */}
       <div className="max-w-7xl mx-auto px-4 pt-6">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white transition-all backdrop-blur-md group"
         >
           <ArrowLeft

@@ -3,13 +3,14 @@ import { getContent, searchContent } from "../services/movieApi";
 import { MovieCard } from "../components/MovieCard";
 import { Loader } from "../components/Loader";
 import { useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, X, Hash, Send } from "lucide-react";
 
 export default function HomePage({ categories, type }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [gotoPage, setGotoPage] = useState();
 
   // URL Params
   const page = Number(searchParams.get("page")) || 1;
@@ -45,30 +46,37 @@ export default function HomePage({ categories, type }) {
     setSearchParams(params);
   };
 
+  const handleJumpPage = (e) => {
+    if (e) e.preventDefault();
+    const pageNum = Number(gotoPage);
+    // Validation: Ensure it's a number and within range
+    if (pageNum > 0 && pageNum <= totalPages) {
+      handlePageChange(pageNum);
+      setGotoPage("");
+    }
+  };
+
   // 2. FIXED: Fetching Logic
   useEffect(() => {
     async function loadMovies() {
       setLoading(true);
       try {
-        let data;
-
-        // If there is a search query, prioritize Search API
-        if (query) {
-          data = await searchContent({ query, type, page, year });
-        }
-        // Otherwise, use the Discover/Category API (Genre + Year)
-        else {
-          data = await getContent({
-            page,
-            type,
-            category: categories,
-            year,
-            genre,
-          });
-        }
-
+        const data =
+          query && !genre
+            ? await searchContent({ query, type, page, year })
+            : await getContent({
+                page,
+                type,
+                category: categories,
+                year,
+                genre,
+              });
         setMovies(data.results || []);
-        setTotalPages(data.total_pages || 1);
+        const apiTotalPages = data.total_pages || 1;
+
+        if (type === "movie") {
+          setTotalPages(Math.min(apiTotalPages, 500));
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -221,33 +229,57 @@ export default function HomePage({ categories, type }) {
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-2 pointer-events-none">
-          <div className="flex items-center gap-1 bg-black/80 backdrop-blur-2xl border border-white/10 p-1.5 rounded-full shadow-2xl pointer-events-auto">
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-2 pointer-events-none md:flex-row flex-col items-center">
+          {/* GOTOPAGE */}
+          <form
+            onSubmit={handleJumpPage}
+            className="flex items-center gap-2 bg-gray-950/80 backdrop-blur-xl border border-white/10 p-1.5 rounded-full shadow-2xl pointer-events-auto transition-all hover:border-cyan-500/50"
+          >
+            <div className="flex items-center gap-2 pl-3">
+              <Hash size={14} className="text-cyan-500" />
+              <input
+                // type="number"
+                placeholder="Jump to..."
+                value={gotoPage}
+                onChange={(e) => setGotoPage(e.target.value)}
+                className="bg-transparent text-sm w-16 focus:outline-none text-white placeholder:text-gray-600"
+                min="1"
+                max={totalPages}
+              />
+            </div>
+            <button
+              type="submit"
+              className="bg-cyan-600 hover:bg-cyan-500 p-2 rounded-full text-white transition-all active:scale-90"
+            >
+              <Send size={14} />
+            </button>
+          </form>
+          <div className="flex items-center gap-1 bg-black/60 backdrop-blur border border-white/30 p-1.5 rounded-full shadow-2xl pointer-events-auto">
             {/* PREV BUTTON */}
             <button
               disabled={page === 1}
               onClick={() => handlePageChange(page - 1)}
-              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-gray-400 hover:text-cyan-400 hover:bg-white/5 disabled:opacity-0 transition-all"
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center bg-cyan-600 rounded-full text-black/80 hover:text-cyan-400 hover:bg-cyan-900 disabled:opacity-0 transition-all"
             >
               <ChevronLeft size={20} />
             </button>
 
             {/* NUMBERS */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center ">
               {getPageNum().map((p, i) => (
                 <button
                   key={i}
                   disabled={p === "..."}
                   onClick={() => typeof p === "number" && handlePageChange(p)}
                   className={`
-              relative flex items-center justify-center transition-all duration-300 font-bold
-              ${p === "..." ? "w-4 sm:w-8 cursor-default text-gray-600" : "w-9 h-9 sm:w-11 sm:h-11 rounded-full text-xs sm:text-sm"}
-              ${
-                p === page
-                  ? "text-cyan-400 bg-cyan-400/10"
-                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
-              }
-            `}
+                  relative flex items-center justify-center transition-all duration-300 font-bold
+                  ${p === "..." ? "w-4 sm:w-8 cursor-default text-gray-600" : "w-9 h-9 sm:w-11 sm:h-11 rounded-full text-xs sm:text-sm"}
+                  ${
+                    p === page
+                      ? "text-cyan-400 bg-cyan-400/10"
+                      : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
+                  }
+                `}
                 >
                   {p}
                   {/* Active Glow Dot */}
@@ -262,7 +294,7 @@ export default function HomePage({ categories, type }) {
             <button
               disabled={page === totalPages}
               onClick={() => handlePageChange(page + 1)}
-              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-gray-400 hover:text-cyan-400 hover:bg-white/5 disabled:opacity-0 transition-all"
+              className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center bg-cyan-600 rounded-full text-black/80 hover:text-cyan-400 hover:bg-cyan-900 disabled:opacity-0 transition-all"
             >
               <ChevronRight size={20} />
             </button>
