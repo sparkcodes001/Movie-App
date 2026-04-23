@@ -229,11 +229,11 @@ export default function HomePage({ categories, type }) {
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-2 pointer-events-none md:flex-row flex-col items-center">
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-2 pointer-events-none md:gap-2 md:flex-row flex-col items-center">
           {/* GOTOPAGE */}
           <form
             onSubmit={handleJumpPage}
-            className="flex items-center gap-2 bg-gray-950/80 backdrop-blur-xl border border-white/10 p-1.5 rounded-full shadow-2xl pointer-events-auto transition-all hover:border-cyan-500/50"
+            className="flex items-center gap-2 bg-gray-950/80 backdrop-blur-xl border border-white/20 p-1.5 rounded-full shadow-2xl pointer-events-auto transition-all hover:border-cyan-500/50"
           >
             <div className="flex items-center gap-2 pl-3">
               <Hash size={14} className="text-cyan-500" />
