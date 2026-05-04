@@ -4,7 +4,7 @@ import {
   getMovieVideos,
   getWatchProviders,
 } from "../services/movieApi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader } from "../components/Loader";
 import {
   Star,
@@ -19,6 +19,10 @@ import {
   ShieldAlert,
   ExternalLink,
 } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function MovieDetailPage() {
   const navigate = useNavigate();
@@ -30,7 +34,20 @@ export default function MovieDetailPage() {
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
   const [isDownloadOpen, setIsDownloadOpen] = useState(false);
 
-  // FIXED: Improved URLs for better reliability
+  // Animation refs
+  const backdropRef = useRef(null);
+  const posterRef = useRef(null);
+  const titleRef = useRef(null);
+  const taglineRef = useRef(null);
+  const statsRef = useRef(null);
+  const buttonsRef = useRef(null);
+  const overviewRef = useRef(null);
+  const trailerRef = useRef(null);
+  const providersRef = useRef(null);
+  const backButtonRef = useRef(null);
+  const modalRef = useRef(null);
+  const downloadModalRef = useRef(null);
+
   const streamUrl =
     type === "movie"
       ? `https://vidsrc.to/embed/movie/${id}`
@@ -56,6 +73,208 @@ export default function MovieDetailPage() {
     }
     loadMovie();
   }, [id, type]);
+
+  // Main entrance animations
+  useEffect(() => {
+    if (!loading && movie) {
+      const ctx = gsap.context(() => {
+        // Backdrop zoom and fade
+        gsap.fromTo(
+          backdropRef.current,
+          { scale: 1.2, opacity: 0 },
+          { scale: 1, opacity: 0.3, duration: 1.5, ease: "power1.inOut" },
+        );
+
+        // Back button slide in
+        gsap.fromTo(
+          backButtonRef.current,
+          { x: -100, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "back.out(1.7)",
+            delay: 0.3,
+          },
+        );
+
+        // Poster slide and rotate in
+        gsap.fromTo(
+          posterRef.current,
+          { x: -150, rotateY: -45, opacity: 0 },
+          {
+            x: 0,
+            rotateY: 0,
+            opacity: 1,
+            duration: 1.2,
+            ease: "power4.out",
+            delay: 0.4,
+          },
+        );
+
+        // Title dramatic entrance
+        gsap.fromTo(
+          titleRef.current,
+          { y: 100, opacity: 0, rotateX: 90 },
+          {
+            y: 0,
+            opacity: 1,
+            rotateX: 0,
+            duration: 1,
+            ease: "power4.out",
+            delay: 0.6,
+          },
+        );
+
+        // Tagline fade and slide
+        if (taglineRef.current) {
+          gsap.fromTo(
+            taglineRef.current,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, ease: "power2.out", delay: 0.9 },
+          );
+        }
+
+        // Stats stagger animation
+        gsap.fromTo(
+          statsRef.current.children,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "back.out(2)",
+            delay: 1.1,
+          },
+        );
+
+        // Buttons pulse in
+        gsap.fromTo(
+          buttonsRef.current.children,
+          { scale: 0, y: 50 },
+          {
+            scale: 1,
+            y: 0,
+            duration: 0.7,
+            stagger: 0.15,
+            ease: "elastic.out(1, 0.5)",
+            delay: 1.3,
+          },
+        );
+
+        // Overview fade up
+        gsap.fromTo(
+          overviewRef.current,
+          { y: 50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1,
+            ease: "power2.out",
+            delay: 1.5,
+          },
+        );
+
+        // Providers card slide in
+        if (providersRef.current) {
+          gsap.fromTo(
+            providersRef.current,
+            { y: 50, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              ease: "power2.out",
+              delay: 1.2,
+            },
+          );
+        }
+
+        // Trailer section scroll-triggered animation
+        if (trailerRef.current) {
+          gsap.fromTo(
+            trailerRef.current,
+            { y: 100, opacity: 0, scale: 0.9 },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 1,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: trailerRef.current,
+                start: "top 80%",
+                toggleActions: "play none none reverse",
+              },
+            },
+          );
+        }
+      });
+
+      return () => ctx.revert();
+    }
+  }, [loading, movie]);
+
+  // Player modal animation
+  useEffect(() => {
+    if (isPlayerOpen && modalRef.current) {
+      gsap.fromTo(
+        modalRef.current,
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" },
+      );
+
+      gsap.fromTo(
+        modalRef.current.querySelector(".player-container"),
+        { rotateX: -90, transformOrigin: "center top" },
+        {
+          rotateX: 0,
+          duration: 0.8,
+          ease: "power4.out",
+          delay: 0.2,
+        },
+      );
+    }
+  }, [isPlayerOpen]);
+
+  // Download modal animation
+  useEffect(() => {
+    if (isDownloadOpen && downloadModalRef.current) {
+      const modal = downloadModalRef.current;
+
+      gsap.fromTo(
+        modal,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power2.out" },
+      );
+
+      gsap.fromTo(
+        modal.querySelector(".download-card"),
+        { y: 100, opacity: 0, scale: 0.9 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.6,
+          ease: "back.out(1.7)",
+        },
+      );
+
+      gsap.fromTo(
+        modal.querySelectorAll(".download-source"),
+        { x: -50, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: "power2.out",
+          delay: 0.3,
+        },
+      );
+    }
+  }, [isDownloadOpen]);
 
   if (loading || !movie) return <Loader loading={true} />;
 
@@ -85,8 +304,11 @@ export default function MovieDetailPage() {
 
   return (
     <div className="relative min-h-screen bg-gray-950 text-white overflow-x-hidden">
-      {/* 1. CINEMATIC BACKDROP */}
-      <div className="absolute inset-0 z-0 h-[60vh] md:h-screen">
+      {/* CINEMATIC BACKDROP */}
+      <div
+        ref={backdropRef}
+        className="absolute inset-0 z-0 h-[60vh] md:h-screen"
+      >
         <img
           src={`https://image.tmdb.org/t/p/original${movie?.backdrop_path}`}
           className="w-full h-full object-cover opacity-30"
@@ -98,8 +320,23 @@ export default function MovieDetailPage() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 pt-6 pb-20">
         {/* BACK BUTTON */}
         <button
+          ref={backButtonRef}
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all mb-8 backdrop-blur-md"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all mb-8 backdrop-blur-md hover:scale-105"
+          onMouseEnter={(e) => {
+            gsap.to(e.currentTarget, {
+              x: -5,
+              duration: 0.3,
+              ease: "power2.out",
+            });
+          }}
+          onMouseLeave={(e) => {
+            gsap.to(e.currentTarget, {
+              x: 0,
+              duration: 0.3,
+              ease: "power2.out",
+            });
+          }}
         >
           <ArrowLeft size={18} /> <span>Back</span>
         </button>
@@ -107,7 +344,11 @@ export default function MovieDetailPage() {
         <div className="grid lg:grid-cols-[350px_1fr] gap-12">
           {/* POSTER COLUMN */}
           <div className="flex flex-col gap-6">
-            <div className="rounded-3xl overflow-hidden shadow-2xl border border-white/10 shadow-cyan-500/10">
+            <div
+              ref={posterRef}
+              className="rounded-3xl overflow-hidden shadow-2xl border border-white/10 shadow-cyan-500/10 hover:shadow-cyan-500/30 transition-shadow duration-500"
+              style={{ perspective: "1000px" }}
+            >
               <img
                 src={`https://image.tmdb.org/t/p/w500${movie?.poster_path}`}
                 alt={movie?.title}
@@ -115,18 +356,39 @@ export default function MovieDetailPage() {
               />
             </div>
 
-            {/* STREAMING PROVIDERS (Legal links) */}
+            {/* STREAMING PROVIDERS */}
             {country?.flatrate?.length > 0 && (
-              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-3xl">
+              <div
+                ref={providersRef}
+                className="bg-white/5 backdrop-blur-xl border border-white/10 p-5 rounded-3xl"
+              >
                 <h3 className="flex items-center gap-2 text-sm font-bold text-cyan-500 uppercase tracking-widest mb-4">
                   <Monitor size={16} /> Legal Streaming
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {country.flatrate.map((p) => (
-                    <div key={p.provider_id} className="group relative">
+                  {country.flatrate.map((p, idx) => (
+                    <div
+                      key={p.provider_id}
+                      className="group relative provider-logo"
+                      onMouseEnter={(e) => {
+                        gsap.to(e.currentTarget, {
+                          scale: 1.2,
+                          rotate: 360,
+                          duration: 0.6,
+                          ease: "back.out(1.7)",
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        gsap.to(e.currentTarget, {
+                          scale: 1,
+                          rotate: 0,
+                          duration: 0.4,
+                        });
+                      }}
+                    >
                       <img
                         src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
-                        className="w-10 h-10 rounded-xl transition-transform group-hover:scale-110"
+                        className="w-10 h-10 rounded-xl"
                         alt={p.provider_name}
                       />
                     </div>
@@ -139,18 +401,25 @@ export default function MovieDetailPage() {
           {/* DETAILS COLUMN */}
           <div className="flex flex-col gap-6">
             <div>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-2 italic">
+              <h1
+                ref={titleRef}
+                className="text-4xl md:text-6xl font-black tracking-tighter mb-2 italic"
+                style={{ perspective: "1000px" }}
+              >
                 {movie?.title || movie?.name}
               </h1>
               {movie?.tagline && (
-                <p className="text-xl text-cyan-400/80 italic font-medium">
+                <p
+                  ref={taglineRef}
+                  className="text-xl text-cyan-400/80 italic font-medium"
+                >
                   "{movie?.tagline}"
                 </p>
               )}
             </div>
 
             {/* QUICK STATS */}
-            <div className="flex flex-wrap gap-6 text-gray-300">
+            <div ref={statsRef} className="flex flex-wrap gap-6 text-gray-300">
               <div className="flex items-center gap-2">
                 <Star
                   size={20}
@@ -171,12 +440,25 @@ export default function MovieDetailPage() {
               </div>
             </div>
 
-            {/* WATCH NOW BUTTON */}
             {/* DOWNLOAD & WATCH BUTTONS */}
-            <div className="flex flex-wrap gap-4 mt-6">
+            <div ref={buttonsRef} className="flex flex-wrap gap-4 mt-6">
               <button
                 onClick={() => setIsPlayerOpen(true)}
                 className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-cyan-600/40"
+                onMouseEnter={(e) => {
+                  gsap.to(e.currentTarget, {
+                    scale: 1.05,
+                    boxShadow: "0 0 30px rgba(6, 182, 212, 0.6)",
+                    duration: 0.3,
+                  });
+                }}
+                onMouseLeave={(e) => {
+                  gsap.to(e.currentTarget, {
+                    scale: 1,
+                    boxShadow: "0 0 15px rgba(6, 182, 212, 0.4)",
+                    duration: 0.3,
+                  });
+                }}
               >
                 <Play size={20} fill="currentColor" /> Watch Now
               </button>
@@ -184,6 +466,20 @@ export default function MovieDetailPage() {
               <button
                 onClick={() => setIsDownloadOpen(true)}
                 className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold transition-all active:scale-95"
+                onMouseEnter={(e) => {
+                  gsap.to(e.currentTarget, {
+                    scale: 1.05,
+                    borderColor: "rgba(255, 255, 255, 0.3)",
+                    duration: 0.3,
+                  });
+                }}
+                onMouseLeave={(e) => {
+                  gsap.to(e.currentTarget, {
+                    scale: 1,
+                    borderColor: "rgba(255, 255, 255, 0.1)",
+                    duration: 0.3,
+                  });
+                }}
               >
                 <Download size={20} /> Download
               </button>
@@ -191,11 +487,14 @@ export default function MovieDetailPage() {
 
             {/* DOWNLOAD MODAL */}
             {isDownloadOpen && (
-              <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
-                <div className="relative w-full max-w-md bg-gray-900 border border-white/10 rounded-3xl p-6 shadow-2xl">
+              <div
+                ref={downloadModalRef}
+                className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+              >
+                <div className="download-card relative w-full max-w-md bg-gray-900 border border-white/10 rounded-3xl p-6 shadow-2xl">
                   <button
                     onClick={() => setIsDownloadOpen(false)}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-white"
+                    className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
                   >
                     <X size={24} />
                   </button>
@@ -219,11 +518,25 @@ export default function MovieDetailPage() {
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-between bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-2xl transition-all group"
+                        className="download-source flex items-center justify-between bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-2xl transition-all group"
+                        onMouseEnter={(e) => {
+                          gsap.to(e.currentTarget, {
+                            x: 5,
+                            backgroundColor: "rgba(255, 255, 255, 0.1)",
+                            duration: 0.3,
+                          });
+                        }}
+                        onMouseLeave={(e) => {
+                          gsap.to(e.currentTarget, {
+                            x: 0,
+                            backgroundColor: "rgba(255, 255, 255, 0.05)",
+                            duration: 0.3,
+                          });
+                        }}
                       >
                         <div className="flex items-center gap-3">
                           <HardDrive
-                            className="text-gray-500 group-hover:text-cyan-500"
+                            className="text-gray-500 group-hover:text-cyan-500 transition-colors"
                             size={20}
                           />
                           <div>
@@ -255,7 +568,7 @@ export default function MovieDetailPage() {
             )}
 
             {/* OVERVIEW */}
-            <div className="space-y-3 mt-4">
+            <div ref={overviewRef} className="space-y-3 mt-4">
               <h3 className="text-lg font-bold uppercase tracking-widest text-gray-400">
                 Overview
               </h3>
@@ -265,12 +578,12 @@ export default function MovieDetailPage() {
             </div>
 
             {/* TRAILER SECTION */}
-            <div className="mt-8">
+            <div ref={trailerRef} className="mt-8">
               <h3 className="flex items-center gap-2 text-lg font-bold uppercase tracking-widest text-gray-400 mb-4">
                 <Play size={20} fill="none" /> Official Trailer
               </h3>
               {trailer ? (
-                <div className="relative w-full aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                <div className="relative w-full aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-2xl hover:shadow-cyan-600/20 transition-shadow duration-500">
                   <iframe
                     className="absolute inset-0 w-full h-full"
                     src={`https://www.youtube.com/embed/${trailer.key}?rel=0&showinfo=0`}
@@ -290,17 +603,32 @@ export default function MovieDetailPage() {
 
       {/* VIDEO PLAYER MODAL */}
       {isPlayerOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
-          <div className="relative w-full max-w-6xl aspect-video bg-black rounded-xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-            {/* Close Button */}
+        <div
+          ref={modalRef}
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4"
+        >
+          <div className="player-container relative w-full max-w-6xl aspect-video bg-black rounded-xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
             <button
               onClick={() => setIsPlayerOpen(false)}
               className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[110] bg-black/60 text-white p-2 rounded-full hover:bg-red-600 transition-all shadow-xl"
+              onMouseEnter={(e) => {
+                gsap.to(e.currentTarget, {
+                  scale: 1.1,
+                  rotate: 90,
+                  duration: 0.3,
+                });
+              }}
+              onMouseLeave={(e) => {
+                gsap.to(e.currentTarget, {
+                  scale: 1,
+                  rotate: 0,
+                  duration: 0.3,
+                });
+              }}
             >
               <X size={24} />
             </button>
 
-            {/* THE PLAYER IFRAME */}
             <iframe
               src={streamUrl}
               className="w-full h-full"
