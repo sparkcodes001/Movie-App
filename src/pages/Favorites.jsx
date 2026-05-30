@@ -1,76 +1,122 @@
 import { MovieCard } from "../components/MovieCard";
 import { useMovies } from "../context/MovieContext";
-import { Heart, ArrowLeft, Home } from "lucide-react"; // Added Home icon
+import { Heart, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { RiTerminalBoxLine } from "react-icons/ri";
 
-export default function FavoritePage({ type }) {
+export default function FavoritePage() {
   const { favorites } = useMovies();
   const navigate = useNavigate();
+  const containerRef = useRef();
 
-  // EMPTY STATE
+  useGSAP(() => {
+    gsap.fromTo(
+      ".fav-card",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, stagger: 0.05, duration: 0.5, ease: "power2.out" },
+    );
+  }, [favorites]);
+
   if (favorites.length === 0) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 text-center">
-        <div className="bg-white/5 p-6 rounded-full mb-6 backdrop-blur-xl border border-white/10">
-          <Heart size={48} className="text-gray-600" />
+      <div className="min-h-screen bg-[#030303] flex flex-col items-center justify-center px-6 text-center">
+        {/* Scanlines */}
+        <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.08)_50%)] bg-[length:100%_4px] opacity-30" />
+
+        <div className="relative z-10 space-y-8 font-mono">
+          <div className="flex items-center justify-center gap-3 text-cyan-500">
+            <RiTerminalBoxLine size={16} className="animate-pulse" />
+            <span className="text-[9px] uppercase tracking-[0.4em]">
+              Favorites_Vault // Empty
+            </span>
+          </div>
+
+          <div className="w-16 h-16 border border-white/10 flex items-center justify-center mx-auto">
+            <Heart size={24} className="text-zinc-700" />
+          </div>
+
+          <div>
+            <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
+              Vault_Empty
+            </h2>
+            <p className="text-zinc-600 text-xs mt-3 tracking-widest uppercase">
+              No units saved to favorites archive
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate("/")}
+            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase italic tracking-widest text-[10px] overflow-hidden active:scale-95 transition-all"
+          >
+            <div className="absolute inset-0 bg-cyan-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            <ArrowLeft
+              size={13}
+              className="relative z-10 group-hover:text-white transition-colors"
+            />
+            <span className="relative z-10 group-hover:text-white transition-colors">
+              Browse_Archive
+            </span>
+          </button>
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-          Your Library is Empty
-        </h2>
-        <p className="text-gray-400 max-w-sm mb-8">
-          You haven't added any movies or TV shows to your favorites yet. Start
-          exploring!
-        </p>
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-cyan-600/20 group"
-        >
-          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          Browse Movies
-        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-transparent pb-20">
-      {/* 1. TOP NAVIGATION BAR */}
-      <div className="max-w-7xl mx-auto px-4 pt-6">
+    <div ref={containerRef} className="min-h-screen bg-[#030303] pb-20">
+      {/* Scanlines */}
+      <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.08)_50%)] bg-[length:100%_4px] opacity-30 z-0" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-20 sm:pt-24">
+        {/* Back */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-gray-400 hover:text-white transition-all backdrop-blur-md group"
+          className="group flex items-center gap-3 font-mono text-[9px] uppercase tracking-[0.3em] text-zinc-600 hover:text-cyan-400 transition-colors mb-10"
         >
           <ArrowLeft
-            size={18}
+            size={13}
             className="group-hover:-translate-x-1 transition-transform"
           />
-          <span className="text-sm font-semibold">Back to Home</span>
+          Return_to_Archive
         </button>
-      </div>
 
-      {/* 2. HEADER */}
-      <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
-        <div className="flex items-end gap-3 mb-2">
-          <Heart size={32} className="text-red-500 mb-1" fill="currentColor" />
-          <h1 className="text-3xl md:text-5xl font-black text-white italic tracking-tighter uppercase">
-            Your<span className="text-cyan-500">Favorites</span>
+        {/* Header */}
+        <div className="mb-10 border-b border-white/5 pb-8">
+          <div className="flex items-center gap-3 text-cyan-500 mb-4">
+            <RiTerminalBoxLine size={14} className="animate-pulse" />
+            <span className="font-mono text-[9px] uppercase tracking-[0.4em]">
+              Favorites_Vault // {favorites.length} Units Saved
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black italic tracking-tighter uppercase leading-none">
+            Your
+            <span className="text-cyan-500">_Vault</span>
           </h1>
-        </div>
-        <p className="text-gray-400 ml-1 font-medium">
-          Showing {favorites.length} saved{" "}
-          {favorites.length === 1 ? "title" : "titles"}
-        </p>
-      </div>
 
-      {/* 3. GRID LAYOUT */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 px-4">
-        {favorites.map((movie) => (
-          <MovieCard
-            key={movie.id}
-            movie={movie}
-            type={movie.media_type || type}
-          />
-        ))}
+          <div className="flex items-center gap-3 mt-4 font-mono text-[8px] uppercase tracking-widest text-zinc-600">
+            <Heart size={10} className="text-red-500 fill-red-500" />
+            <span>
+              {favorites.length} saved{" "}
+              {favorites.length === 1 ? "title" : "titles"} in archive
+            </span>
+          </div>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5">
+          {favorites.map((movie) => (
+            <div key={movie.id} className="fav-card">
+              <MovieCard
+                movie={movie}
+                type={movie.media_type || (movie.title ? "movie" : "tv")}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

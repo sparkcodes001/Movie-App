@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Terminal } from "lucide-react";
+import CinematicLogo from "../context/Logo";
 
 export function Loader({ loading }) {
   const [progress, setProgress] = useState(0);
@@ -10,23 +11,34 @@ export function Loader({ loading }) {
 
   useEffect(() => {
     if (loading) {
+      setProgress(0);
       const interval = setInterval(() => {
         setProgress((prev) =>
-          prev < 99 ? prev + Math.floor(Math.random() * 15) : 99,
+          prev < 92 ? prev + Math.floor(Math.random() * 12) + 2 : 92,
         );
-      }, 150);
+      }, 180);
       return () => clearInterval(interval);
     } else {
       setProgress(0);
     }
   }, [loading]);
 
+  useEffect(() => {
+    if (loading && barRef.current) {
+      gsap.to(barRef.current, {
+        width: `${progress}%`,
+        duration: 0.4,
+        ease: "power1.out",
+      });
+    }
+  }, [progress, loading]);
+
   useGSAP(() => {
-    if (loading) {
-      // Subtle flicker instead of heavy rough ease for better mobile performance
+    if (loading && container.current) {
+      // Very subtle flicker
       gsap.to(container.current, {
-        opacity: 0.95,
-        duration: 0.15,
+        opacity: 0.92,
+        duration: 0.2,
         repeat: -1,
         yoyo: true,
         ease: "none",
@@ -34,70 +46,60 @@ export function Loader({ loading }) {
     }
   }, [loading]);
 
-  // Separate useEffect for progress bar to keep it smooth
-  useEffect(() => {
-    if (loading && barRef.current) {
-      gsap.to(barRef.current, {
-        width: `${progress}%`,
-        duration: 0.3,
-        ease: "power1.out",
-      });
-    }
-  }, [progress, loading]);
-
   if (!loading) return null;
 
   return (
     <div
       ref={container}
-      className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center z-[9999] overflow-hidden px-6"
+      className="fixed inset-0 bg-[#030303] flex flex-col items-center justify-center z-[9999] overflow-hidden"
     >
-      {/* BACKGROUND SCANLINES */}
-      <div className="absolute inset-0 pointer-events-none opacity-20 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
+      {/* Scanlines */}
+      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_3px] opacity-40" />
 
-      <div className="relative flex flex-col items-center gap-6 md:gap-10 w-full max-w-[280px] md:max-w-xs">
-        {/* TOP STATUS */}
-        <div className="flex items-center gap-2 md:gap-3 text-cyan-500 animate-pulse">
-          <Terminal size={16} className="md:w-5 md:h-5" />
-          <span className="font-mono text-[8px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] whitespace-nowrap">
-            Status: Initializing_Breach
+      {/* Corner brackets */}
+      <div className="absolute top-8 left-8 w-8 h-8 border-t border-l border-white/10" />
+      <div className="absolute top-8 right-8 w-8 h-8 border-t border-r border-white/10" />
+      <div className="absolute bottom-8 left-8 w-8 h-8 border-b border-l border-white/10" />
+      <div className="absolute bottom-8 right-8 w-8 h-8 border-b border-r border-white/10" />
+
+      {/* Content */}
+      <div className="relative flex flex-col items-center gap-8 w-full max-w-xs px-6">
+        {/* Status */}
+        <div className="flex items-center gap-3 text-cyan-500">
+          <Terminal size={14} />
+          <span className="font-mono text-[9px] uppercase tracking-[0.4em] animate-pulse">
+            Initializing_Breach
           </span>
         </div>
 
-        {/* LOGO REVEAL */}
-        <h2 className="text-white font-black italic text-2xl md:text-4xl tracking-tighter uppercase select-none">
-          MOVIE<span className="text-cyan-500">LAB</span>
-        </h2>
+        {/* Logo */}
+        <CinematicLogo />
 
-        {/* PROGRESS BAR SECTION */}
-        <div className="w-full space-y-2 md:space-y-4">
-          <div className="flex justify-between font-mono text-[7px] md:text-[9px] text-zinc-500 uppercase tracking-widest">
-            <span className="opacity-70">Decrypting_Node</span>
-            <span className="text-cyan-500 font-bold">{progress}%</span>
+        {/* Progress */}
+        <div className="w-full space-y-3">
+          <div className="flex justify-between font-mono text-[8px] text-zinc-600 uppercase tracking-widest">
+            <span>Decrypting_Node</span>
+            <span className="text-cyan-500 font-bold">
+              {Math.min(progress, 99)}%
+            </span>
           </div>
 
-          <div className="h-[1px] md:h-[2px] w-full bg-zinc-900 relative overflow-hidden">
+          <div className="h-[1px] w-full bg-zinc-900 relative overflow-hidden">
             <div
               ref={barRef}
-              className="absolute top-0 left-0 h-full bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,1)]"
+              className="absolute top-0 left-0 h-full bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.8)]"
               style={{ width: "0%" }}
             />
           </div>
         </div>
 
-        {/* SYSTEM LOGS (FLICKERING) */}
-        <div className="flex flex-col items-center gap-1 font-mono text-[6px] md:text-[8px] text-zinc-700 uppercase tracking-[0.1em] md:tracking-[0.2em] text-center">
+        {/* Log lines */}
+        <div className="flex flex-col items-center gap-1.5 font-mono text-[7px] text-zinc-700 uppercase tracking-[0.15em] text-center">
           <span className="animate-pulse">Bypassing_Firewall... OK</span>
-          <span className="opacity-40">Neural_Handshake... ACTIVE</span>
-          <span className="text-red-900/40">Trace_Status: UNDETECTED</span>
+          <span className="opacity-50">Neural_Handshake... ACTIVE</span>
+          <span className="text-red-900/50">Trace_Status: UNDETECTED</span>
         </div>
       </div>
-
-      {/* RESPONSIVE CORNER BRACKETS - Moved closer to corners on mobile */}
-      <div className="absolute top-6 left-6 md:top-12 md:left-12 w-6 h-6 md:w-12 md:h-12 border-t border-l border-white/10" />
-      <div className="absolute top-6 right-6 md:top-12 md:right-12 w-6 h-6 md:w-12 md:h-12 border-t border-r border-white/10" />
-      <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 w-6 h-6 md:w-12 md:h-12 border-b border-l border-white/10" />
-      <div className="absolute bottom-6 right-6 md:bottom-12 md:right-12 w-6 h-6 md:w-12 md:h-12 border-b border-r border-white/10" />
     </div>
   );
 }

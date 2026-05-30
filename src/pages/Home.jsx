@@ -12,13 +12,14 @@ import {
   Check,
   Calendar,
   X,
-  RotateCcw,
+  Terminal,
+  Activity,
 } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
 const GENRES = [
-  { id: "", name: "All Data" },
+  { id: "", name: "All_Data" },
   { id: "28", name: "Action" },
   { id: "35", name: "Comedy" },
   { id: "18", name: "Drama" },
@@ -40,14 +41,9 @@ export default function HomePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [searchInput, setSearchInput] = useState(
-    searchParams.get("query") || "",
-  );
-
   const dropdownContainerRef = useRef();
   const gridRef = useRef();
 
-  // ALL state lives in the URL - single source of truth
   const type = searchParams.get("type") || "movie";
   const category = searchParams.get("category") || "popular";
   const page = Number(searchParams.get("page")) || 1;
@@ -55,35 +51,24 @@ export default function HomePage() {
   const year = searchParams.get("year") || "";
   const genre = searchParams.get("genre") || "";
 
-  // Sync search input if URL query changes externally (e.g. navbar reset)
+  const [searchInput, setSearchInput] = useState(query);
+
   useEffect(() => {
-    setSearchInput(searchParams.get("query") || "");
-  }, [searchParams.get("query")]);
+    setSearchInput(query);
+  }, [query]);
 
   const closeDropdowns = useCallback(() => setActiveDropdown(null), []);
 
   const updateURL = useCallback(
     (newParams) => {
-      // Build from current params
       const current = Object.fromEntries(searchParams.entries());
       const merged = { ...current, ...newParams };
-
-      // Reset page to 1 unless explicitly changing page
-      if (!newParams.hasOwnProperty("page")) {
+      if (!Object.prototype.hasOwnProperty.call(newParams, "page")) {
         merged.page = "1";
       }
-
-      // Remove empty values
       Object.keys(merged).forEach((key) => {
-        if (
-          merged[key] === "" ||
-          merged[key] === null ||
-          merged[key] === undefined
-        ) {
-          delete merged[key];
-        }
+        if (!merged[key]) delete merged[key];
       });
-
       setSearchParams(merged);
       closeDropdowns();
     },
@@ -92,19 +77,17 @@ export default function HomePage() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // When searching, clear genre and year but keep type/category
-    const current = Object.fromEntries(searchParams.entries());
-    const newParams = {
-      type: current.type || "movie",
-      category: current.category || "popular",
-      page: "1",
-    };
-    if (searchInput) newParams.query = searchInput;
+    const newParams = { type, category, page: "1" };
+    if (searchInput.trim()) newParams.query = searchInput.trim();
     setSearchParams(newParams);
     closeDropdowns();
   };
 
-  // Click outside dropdowns
+  const clearSearch = () => {
+    setSearchInput("");
+    setSearchParams({ type, category, page: "1" });
+  };
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
@@ -118,69 +101,56 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [closeDropdowns]);
 
-  // Fetch — reacts to ALL url param changes
   useEffect(() => {
+    let cancelled = false;
     async function loadMovies() {
       setLoading(true);
       try {
-        let data;
-        if (query) {
-          data = await searchContent({ query, type, page, year });
-        } else {
-          data = await getContent({
-            page,
-            type,
-            category,
-            year,
-            genre,
-          });
+        const data = query
+          ? await searchContent({ query, type, page, year })
+          : await getContent({ page, type, category, year, genre });
+        if (!cancelled) {
+          setMovies(data.results || []);
+          setTotalPages(Math.min(data.total_pages || 1, 500));
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
-
-        setMovies(data.results || []);
-        setTotalPages(Math.min(data.total_pages || 1, 500));
-        window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {
         console.error("Archive Retrieval Error:", err);
-        setMovies([]);
+        if (!cancelled) setMovies([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
-
     loadMovies();
+    return () => {
+      cancelled = true;
+    };
   }, [page, category, type, query, year, genre]);
 
-  // Animations
   useGSAP(() => {
-    gsap.from(".char", {
-      opacity: 0,
-      y: 50,
-      rotateX: -90,
-      stagger: 0.03,
-      duration: 1,
-      ease: "back.out(1.7)",
-    });
+    gsap.fromTo(
+      ".char",
+      { opacity: 0, y: 40, rotateX: -90 },
+      {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        stagger: 0.03,
+        duration: 0.8,
+        ease: "power3.out",
+      },
+    );
   }, []);
 
   useGSAP(() => {
     if (!loading && movies.length > 0) {
       gsap.fromTo(
         ".movie-anim",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, stagger: 0.05, duration: 0.6, ease: "power2.out" },
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, stagger: 0.04, duration: 0.5, ease: "power2.out" },
       );
     }
   }, [movies, loading]);
-
-  useGSAP(() => {
-    if (activeDropdown) {
-      gsap.fromTo(
-        ".drop-item",
-        { opacity: 0, x: -10 },
-        { opacity: 1, x: 0, stagger: 0.03, duration: 0.3, ease: "power2.out" },
-      );
-    }
-  }, [activeDropdown]);
 
   const getVisiblePages = () => {
     const delta = window.innerWidth < 640 ? 1 : 2;
@@ -195,42 +165,62 @@ export default function HomePage() {
     return range;
   };
 
+  const dropdownPanelClass =
+    "absolute top-[calc(100%+4px)] left-0 w-full bg-[#080808] border border-white/10 z-[70] shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-xl max-h-72 overflow-y-auto";
+
+  const dropdownItemClass = (active) =>
+    `drop-item flex items-center justify-between px-4 py-3 text-left font-mono text-[9px] uppercase tracking-widest transition-all border-l-2 ${
+      active
+        ? "border-cyan-500 text-cyan-400 bg-cyan-500/5"
+        : "border-transparent text-zinc-500 hover:border-zinc-600 hover:text-white hover:bg-white/5"
+    }`;
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-32 selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-[#030303] text-white pb-32 selection:bg-cyan-500 selection:text-black">
       <Loader loading={loading} />
 
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-12 text-center">
-        <h1 className="text-6xl md:text-9xl font-black mb-12 italic tracking-tighter uppercase select-none">
-          {"DISCOVER".split("").map((c, i) => (
-            <span key={i} className="char inline-block">
-              {c}
+      <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 text-cyan-500 mb-4">
+            <Activity size={14} className="animate-pulse" />
+            <span className="font-mono text-[9px] uppercase tracking-[0.4em]">
+              Archive_Query_Interface // v4.0
             </span>
-          ))}
-          <span className="text-cyan-500 italic">
-            {"LAB".split("").map((c, i) => (
-              <span key={i + 8} className="char inline-block">
+          </div>
+
+          <h1 className="text-5xl md:text-8xl lg:text-9xl font-black italic tracking-tighter uppercase leading-none select-none">
+            {"DISCOVER".split("").map((c, i) => (
+              <span key={i} className="char inline-block">
                 {c}
               </span>
             ))}
-          </span>
-        </h1>
+            <span className="text-cyan-500">
+              {"LAB".split("").map((c, i) => (
+                <span key={i + 8} className="char inline-block">
+                  {c}
+                </span>
+              ))}
+            </span>
+          </h1>
+        </div>
 
-        {/* Active filter indicator */}
-        <div className="flex items-center justify-center gap-2 mb-6 font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-          <span className={type === "movie" ? "text-cyan-500" : ""}>
-            {type === "movie" ? "◆ Movies" : "◆ TV Shows"}
+        {/* Breadcrumb */}
+        <div className="flex items-center flex-wrap gap-2 mb-8 font-mono text-[9px] uppercase tracking-widest border-l-2 border-cyan-500/30 pl-4 py-1">
+          <span className="text-cyan-500">
+            ◆ {type === "movie" ? "Movies" : "TV_Shows"}
           </span>
-          <span>›</span>
-          <span className="text-zinc-400">{category.replaceAll("_", " ")}</span>
+          <span className="text-zinc-700">/</span>
+          <span className="text-zinc-500">{category.replaceAll("_", " ")}</span>
           {query && (
             <>
-              <span>›</span>
-              <span className="text-yellow-500">"{query}"</span>
+              <span className="text-zinc-700">/</span>
+              <span className="text-yellow-400">"{query}"</span>
             </>
           )}
           {genre && (
             <>
-              <span>›</span>
+              <span className="text-zinc-700">/</span>
               <span className="text-purple-400">
                 {GENRES.find((g) => g.id === genre)?.name}
               </span>
@@ -238,151 +228,134 @@ export default function HomePage() {
           )}
           {year && (
             <>
-              <span>›</span>
+              <span className="text-zinc-700">/</span>
               <span className="text-green-400">{year}</span>
             </>
           )}
+          <span className="text-zinc-700">/</span>
+          <span className="text-zinc-600">pg_{page}</span>
         </div>
 
-        {/* Filters */}
+        {/* Controls */}
         <div
-          className="flex flex-col lg:flex-row items-center justify-center gap-4 max-w-5xl mx-auto"
+          className="flex flex-col lg:flex-row items-stretch gap-3 max-w-5xl"
           ref={dropdownContainerRef}
         >
-          {/* Genre Dropdown */}
-          <div className="relative w-full lg:w-56">
+          {/* Genre */}
+          <div className="relative w-full lg:w-52">
             <button
               onClick={() =>
                 setActiveDropdown(activeDropdown === "genre" ? null : "genre")
               }
-              className={`w-full flex items-center justify-between bg-white/5 border px-5 py-4 rounded-xl transition-all group ${
+              className={`w-full flex items-center justify-between bg-[#0a0a0a] border px-4 py-3.5 transition-all group ${
                 activeDropdown === "genre"
-                  ? "border-cyan-500 ring-4 ring-cyan-500/10"
-                  : "border-white/10"
+                  ? "border-cyan-500"
+                  : "border-white/10 hover:border-white/20"
               }`}
             >
               <div className="flex items-center gap-3">
                 <Filter
-                  size={16}
+                  size={13}
                   className={genre ? "text-cyan-500" : "text-zinc-600"}
                 />
-                <span className="font-mono text-[11px] uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
-                  {GENRES.find((g) => g.id === genre)?.name || "Select Genre"}
+                <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
+                  {GENRES.find((g) => g.id === genre)?.name || "Genre_Filter"}
                 </span>
               </div>
               <ChevronDown
-                size={16}
-                className={`text-zinc-600 transition-transform duration-300 ${
-                  activeDropdown === "genre" ? "rotate-180" : ""
-                }`}
+                size={13}
+                className={`text-zinc-600 transition-transform duration-300 ${activeDropdown === "genre" ? "rotate-180" : ""}`}
               />
             </button>
-
             {activeDropdown === "genre" && (
-              <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-zinc-950 border border-white/10 rounded-xl overflow-hidden z-[70] shadow-2xl backdrop-blur-xl">
-                <div className="p-2 flex flex-col">
-                  {GENRES.map((g) => (
-                    <button
-                      key={g.id}
-                      onClick={() => updateURL({ genre: g.id })}
-                      className={`drop-item flex items-center justify-between px-4 py-3 rounded-lg text-left font-mono text-[10px] uppercase tracking-widest transition-all ${
-                        genre === g.id
-                          ? "bg-cyan-500 text-black font-black"
-                          : "text-zinc-400 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      {g.name} {genre === g.id && <Check size={12} />}
-                    </button>
-                  ))}
-                </div>
+              <div className={dropdownPanelClass}>
+                {GENRES.map((g) => (
+                  <button
+                    key={g.id}
+                    onClick={() => updateURL({ genre: g.id })}
+                    className={dropdownItemClass(genre === g.id)}
+                  >
+                    {g.name} {genre === g.id && <Check size={10} />}
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Year Dropdown */}
-          <div className="relative w-full lg:w-44">
+          {/* Year */}
+          <div className="relative w-full lg:w-40">
             <button
               onClick={() =>
                 setActiveDropdown(activeDropdown === "year" ? null : "year")
               }
-              className={`w-full flex items-center justify-between bg-white/5 border px-5 py-4 rounded-xl transition-all group ${
+              className={`w-full flex items-center justify-between bg-[#0a0a0a] border px-4 py-3.5 transition-all group ${
                 activeDropdown === "year"
-                  ? "border-cyan-500 ring-4 ring-cyan-500/10"
-                  : "border-white/10"
+                  ? "border-cyan-500"
+                  : "border-white/10 hover:border-white/20"
               }`}
             >
               <div className="flex items-center gap-3">
                 <Calendar
-                  size={16}
+                  size={13}
                   className={year ? "text-cyan-500" : "text-zinc-600"}
                 />
-                <span className="font-mono text-[11px] uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
+                <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400 group-hover:text-white transition-colors">
                   {year || "Year"}
                 </span>
               </div>
               <ChevronDown
-                size={16}
-                className={`text-zinc-600 transition-transform duration-300 ${
-                  activeDropdown === "year" ? "rotate-180" : ""
-                }`}
+                size={13}
+                className={`text-zinc-600 transition-transform duration-300 ${activeDropdown === "year" ? "rotate-180" : ""}`}
               />
             </button>
-
             {activeDropdown === "year" && (
-              <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-zinc-950 border border-white/10 rounded-xl overflow-hidden z-[70] shadow-2xl backdrop-blur-xl max-h-80 overflow-y-auto">
-                <div className="p-2 flex flex-col">
-                  {YEARS.map((y) => (
-                    <button
-                      key={y}
-                      onClick={() => updateURL({ year: y })}
-                      className={`drop-item flex items-center justify-between px-4 py-3 rounded-lg text-left font-mono text-[10px] uppercase tracking-widest transition-all ${
-                        year === y
-                          ? "bg-cyan-500 text-black font-black"
-                          : "text-zinc-400 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      {y || "All Time"} {year === y && <Check size={12} />}
-                    </button>
-                  ))}
-                </div>
+              <div className={dropdownPanelClass}>
+                {YEARS.map((y) => (
+                  <button
+                    key={y || "all"}
+                    onClick={() => updateURL({ year: y })}
+                    className={dropdownItemClass(year === y)}
+                  >
+                    {y || "All_Time"} {year === y && <Check size={10} />}
+                  </button>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Search Bar */}
-          <form
-            onSubmit={handleSearch}
-            className="relative flex-1 flex flex-col sm:flex-row gap-3 w-full"
-          >
-            <div className="relative flex-1 bg-white/5 border border-white/10 rounded-xl px-4 flex items-center focus-within:border-cyan-500 transition-all">
-              <Search className="text-zinc-500" size={18} />
+          {/* Search */}
+          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+            <div className="flex-1 bg-[#0a0a0a] border border-white/10 focus-within:border-cyan-500 transition-all flex items-center px-4 gap-3">
+              <Search className="text-zinc-600 shrink-0" size={14} />
               <input
                 type="text"
-                placeholder="Query node database..."
+                placeholder="Query_Archive_Database..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full bg-transparent border-none px-4 py-4 focus:outline-none font-mono text-sm uppercase tracking-widest placeholder:text-zinc-800"
+                className="w-full bg-transparent py-3.5 focus:outline-none font-mono text-xs uppercase tracking-widest placeholder:text-zinc-800 text-white"
               />
               {searchInput && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSearchInput("");
-                    const current = Object.fromEntries(searchParams.entries());
-                    const { query: _q, ...rest } = current;
-                    setSearchParams({ ...rest, page: "1" });
-                  }}
-                  className="text-zinc-600 hover:text-white p-1"
+                  onClick={clearSearch}
+                  className="text-zinc-600 hover:text-white shrink-0"
                 >
-                  <X size={14} />
+                  <X size={13} />
                 </button>
               )}
             </div>
             <button
               type="submit"
-              className="bg-white text-black font-black uppercase italic tracking-widest text-[11px] px-10 py-4 rounded-xl hover:bg-cyan-500 hover:text-white transition-all shadow-xl active:scale-95"
+              className="group relative bg-white text-black px-6 font-black uppercase italic tracking-widest text-[10px] flex items-center gap-2 overflow-hidden whitespace-nowrap active:scale-95 transition-all"
             >
-              Establish_Link
+              <div className="absolute inset-0 bg-cyan-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              <Terminal
+                size={13}
+                className="relative z-10 group-hover:text-white transition-colors"
+              />
+              <span className="relative z-10 group-hover:text-white transition-colors">
+                Execute
+              </span>
             </button>
           </form>
         </div>
@@ -391,7 +364,7 @@ export default function HomePage() {
       {/* Grid */}
       <main
         ref={gridRef}
-        className="max-w-7xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-8 min-h-[400px]"
+        className="max-w-7xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 min-h-[400px]"
       >
         {movies.length > 0
           ? movies.map((movie) => (
@@ -400,59 +373,54 @@ export default function HomePage() {
               </div>
             ))
           : !loading && (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-700">
-                <RotateCcw size={40} className="mb-4 animate-spin-slow" />
-                <p className="font-mono text-xs uppercase tracking-[0.3em]">
-                  No archive entries match your criteria.
-                </p>
+              <div className="col-span-full flex flex-col items-center justify-center py-24 text-zinc-700">
+                <div className="font-mono text-[9px] uppercase tracking-[0.4em] flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border border-zinc-800 flex items-center justify-center">
+                    <Terminal size={20} className="text-zinc-700" />
+                  </div>
+                  <p>No_Archive_Entries_Found</p>
+                  <p className="text-zinc-800">// Adjust query parameters</p>
+                </div>
               </div>
             )}
       </main>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full px-6 flex justify-center pointer-events-none">
-          <div className="bg-black/80 backdrop-blur-2xl border border-white/10 p-2 rounded-full flex items-center gap-1 shadow-2xl pointer-events-auto">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div className="bg-[#030303]/95 backdrop-blur-2xl border border-white/10 p-1.5 flex items-center gap-1 shadow-2xl pointer-events-auto">
             <button
               disabled={page === 1}
               onClick={() => updateURL({ page: page - 1 })}
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              className="w-9 h-9 flex items-center justify-center hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-transparent hover:border-white/10"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={16} />
             </button>
 
-            <div className="flex items-center font-mono text-[10px] px-2">
+            <div className="flex items-center font-mono text-[9px] px-1">
               <button
                 onClick={() => updateURL({ page: 1 })}
-                className={`w-8 h-8 rounded-full ${
-                  page === 1 ? "text-cyan-500 font-black" : "text-zinc-600"
-                }`}
+                className={`w-8 h-8 transition-colors ${page === 1 ? "text-cyan-500 font-black bg-cyan-500/10" : "text-zinc-600 hover:text-white"}`}
               >
                 1
               </button>
-              {page > 3 && <span className="text-zinc-800 px-1">...</span>}
+              {page > 3 && <span className="text-zinc-800 px-1">…</span>}
               {getVisiblePages().map((n) => (
                 <button
                   key={n}
                   onClick={() => updateURL({ page: n })}
-                  className={`w-8 h-8 rounded-full ${
-                    page === n ? "text-cyan-500 font-black" : "text-zinc-600"
-                  }`}
+                  className={`w-8 h-8 transition-colors ${page === n ? "text-cyan-500 font-black bg-cyan-500/10" : "text-zinc-600 hover:text-white"}`}
                 >
                   {n}
                 </button>
               ))}
               {page < totalPages - 2 && (
-                <span className="text-zinc-800 px-1">...</span>
+                <span className="text-zinc-800 px-1">…</span>
               )}
               {totalPages > 1 && (
                 <button
                   onClick={() => updateURL({ page: totalPages })}
-                  className={`w-8 h-8 rounded-full ${
-                    page === totalPages
-                      ? "text-cyan-500 font-black"
-                      : "text-zinc-600"
-                  }`}
+                  className={`w-8 h-8 transition-colors ${page === totalPages ? "text-cyan-500 font-black bg-cyan-500/10" : "text-zinc-600 hover:text-white"}`}
                 >
                   {totalPages}
                 </button>
@@ -462,9 +430,9 @@ export default function HomePage() {
             <button
               disabled={page === totalPages}
               onClick={() => updateURL({ page: page + 1 })}
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+              className="w-9 h-9 flex items-center justify-center hover:bg-white/5 disabled:opacity-20 disabled:cursor-not-allowed transition-all border border-transparent hover:border-white/10"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>

@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }) {
 
   // If no user (Supabase) AND no vault access (Local Flag), send to landing
   if (!user && !hasVaultAccess) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/home" state={{ from: location }} replace />;
   }
 
   return children;

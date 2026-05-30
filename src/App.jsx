@@ -8,7 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export default function App() {
   const location = useLocation();
-  const showNavbar = location.pathname !== "/auth";
+  const showNavbar = location.pathname !== "/home";
 
   return (
     <div className="bg-zinc-950 min-h-screen">
@@ -16,7 +16,7 @@ export default function App() {
 
       <main className={showNavbar ? "pt-16" : ""}>
         <Routes>
-          <Route path="/auth" element={<LandingPage />} />
+          <Route path="/home" element={<LandingPage />} />
 
           <Route
             path="/"
