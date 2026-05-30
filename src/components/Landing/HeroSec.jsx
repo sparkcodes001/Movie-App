@@ -112,7 +112,7 @@ const HeroSec = () => {
             loop
             playsInline
           >
-            <source src="/bgvideo5.mp4" type="video/mp4" />
+            <source src="/videos/bgvideo5.mp4" type="video/mp4" />
           </video>
         </div>
       </div>
