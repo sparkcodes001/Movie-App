@@ -11,9 +11,10 @@ async function fetchData(url) {
 // Get content (movies/tv)
 export async function getContent({ page = 1, type, category, year, genre }) {
   let url;
+  2;
 
   // ✅ USE DISCOVER WHEN FILTERING
-  if (year || genre) {
+  if (year || genre || page) {
     url = `${BASE_URL}/discover/${type}?api_key=${API_KEY}&page=${page}`;
 
     if (year) {

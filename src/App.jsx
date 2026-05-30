@@ -3,58 +3,58 @@ import HomePage from "./pages/Home";
 import MovieDetailPage from "./pages/MovieDetails";
 import FavoritePage from "./pages/Favorites";
 import Navbar from "./components/NavBar";
-import { AuthPage } from "./pages/Auth";
-import { useState } from "react";
+import { LandingPage } from "./pages/LandingPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export default function App() {
   const location = useLocation();
-  const [categories, setCategories] = useState("popular");
-  const [type, setType] = useState("movie");
+  const showNavbar = location.pathname !== "/auth";
 
   return (
-    <div>
-      {location.pathname !== "/auth" && (
-        <Navbar setCategories={setCategories} setType={setType} />
-      )}
-      <Routes className="pt-11">
-        <Route path="/auth" element={<AuthPage />} />
+    <div className="bg-zinc-950 min-h-screen">
+      {showNavbar && <Navbar />}
 
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <HomePage categories={categories} type={type} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/:type/:id"
-          element={
-            <ProtectedRoute>
-              <MovieDetailPage type={type} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/fav"
-          element={
-            <ProtectedRoute>
-              <FavoritePage type={type} />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <ProtectedRoute>
-              <div>
-                not fonud
+      <main className={showNavbar ? "pt-16" : ""}>
+        <Routes>
+          <Route path="/auth" element={<LandingPage />} />
+
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/:type/:id"
+            element={
+              <ProtectedRoute>
+                <MovieDetailPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/fav"
+            element={
+              <ProtectedRoute>
+                <FavoritePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <div className="h-screen flex items-center justify-center text-white font-mono uppercase tracking-widest">
+                404 // Protocol_Not_Found
               </div>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+            }
+          />
+        </Routes>
+      </main>
     </div>
   );
 }
