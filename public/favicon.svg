@@ -1,0 +1,33 @@
+<!-- public/favicon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  
+  <!-- White background block (matches your logo) -->
+  <rect width="100" height="100" fill="white"/>
+  
+  <!-- Cyan scan line overlay (matches the pulse effect) -->
+  <rect width="100" height="100" fill="url(#scanline)" opacity="0.15"/>
+  
+  <!-- The N letter -->
+  <text
+    x="50"
+    y="76"
+    font-family="Georgia, serif"
+    font-size="72"
+    font-weight="900"
+    font-style="italic"
+    text-anchor="middle"
+    fill="black"
+  >N</text>
+
+  <!-- subtle cyan bottom glow -->
+  <rect y="80" width="100" height="20" fill="cyan" opacity="0.2"/>
+
+  <defs>
+    <linearGradient id="scanline" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="cyan" stop-opacity="0"/>
+      <stop offset="50%" stop-color="cyan" stop-opacity="1"/>
+      <stop offset="100%" stop-color="cyan" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+</svg>

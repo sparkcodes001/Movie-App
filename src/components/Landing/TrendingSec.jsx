@@ -68,7 +68,7 @@ const TrendingSec = () => {
         scrollTrigger: {
           trigger: triggerRef.current,
           pin: true,
-          scrub: 1,
+          scrub: 0.3, // ✅ was 1, now snappy
           start: "top top",
           end: `+=${scrollDistance}`,
           invalidateOnRefresh: true,
@@ -78,9 +78,8 @@ const TrendingSec = () => {
       gsap.utils.toArray(".box").forEach((box) => {
         gsap.from(box, {
           opacity: 0,
-          scale: 0.85,
-          y: 40,
-          duration: 0.8,
+          x: 30, // ✅ removed scale + y, just simple fade
+          duration: 0.4, // ✅ was 0.8, now faster
           ease: "power2.out",
           scrollTrigger: {
             trigger: box,
@@ -91,6 +90,7 @@ const TrendingSec = () => {
         });
       });
 
+      // ✅ only kill local triggers
       return () => ScrollTrigger.getAll().forEach((t) => t.kill());
     },
     { scope: triggerRef, dependencies: [movies] },
@@ -100,7 +100,8 @@ const TrendingSec = () => {
     <section ref={triggerRef} className="overflow-hidden bg-[#030303]">
       <div
         ref={sectionRef}
-        className="relative flex flex-row items-center h-screen w-max will-change-transform"
+        // ✅ removed will-change-transform — causes paint glitches
+        className="relative flex flex-row items-center h-screen w-max"
       >
         {/* Background large text */}
         <div className="absolute inset-0 flex items-center pointer-events-none z-0 overflow-hidden">
@@ -128,7 +129,7 @@ const TrendingSec = () => {
         </div>
 
         {/* Cards */}
-        <div className="flex items-center gap-6 md:gap-16 lg:gap-24 px-6 md:px-20 h-full relative z-10">
+        <div className="flex items-center gap-9 md:gap-16 lg:gap-24 px-6 md:px-20 h-full relative z-10">
           {movies.map((movie, index) => {
             const rawDate = movie.release_date || movie.first_air_date || "";
             const releaseYear = rawDate.split("-")[0];
@@ -140,8 +141,8 @@ const TrendingSec = () => {
                 className="box group relative h-[60vh] md:h-[70vh] w-[80vw] sm:w-[55vw] md:w-[40vw] lg:w-[35vw] bg-zinc-900 border border-white/5 rounded-[2rem] md:rounded-[2.5rem] shrink-0 overflow-hidden shadow-2xl hover:border-cyan-500/30 cursor-pointer active:scale-[0.98] transition-all duration-300"
               >
                 <img
-                  src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
-                  className="w-full h-full object-cover opacity-40 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000 ease-out"
+                  src={`https://image.tmdb.org/t/p/w780${movie.backdrop_path}`} // ✅ w780 not original — faster load
+                  className="w-full h-full object-cover opacity-40 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out" // ✅ was 1000ms
                   alt={movie.title || movie.name}
                   loading="lazy"
                 />
@@ -160,7 +161,7 @@ const TrendingSec = () => {
                   </h3>
                 </div>
 
-                <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-all duration-500 group-hover:bg-cyan-500 group-hover:border-cyan-500 group-hover:text-black group-hover:scale-110 group-hover:rotate-45 shadow-xl">
+                <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 w-10 h-10 md:w-14 md:h-14 flex items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-all duration-300 group-hover:bg-cyan-500 group-hover:border-cyan-500 group-hover:text-black group-hover:scale-110 group-hover:rotate-45 shadow-xl">
                   <RiArrowRightUpLine className="text-xl md:text-2xl" />
                 </div>
               </div>

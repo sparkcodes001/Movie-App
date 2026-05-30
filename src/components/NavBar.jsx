@@ -25,7 +25,7 @@ export default function Navbar() {
   const currentCategory = searchParams.get("category") || "popular";
 
   const handleClick = (category, mediaType) => {
-    navigate(`/?type=${mediaType}&category=${category}`);
+    navigate(`/home/?type=${mediaType}&category=${category}`);
     setOpenMenu(false);
     setOpenMovies(false);
     setOpenTvShow(false);
@@ -126,7 +126,7 @@ export default function Navbar() {
         {/* Logo */}
         <div
           ref={logoRef}
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/")}
           className="cursor-pointer"
         >
           <CinematicLogo />

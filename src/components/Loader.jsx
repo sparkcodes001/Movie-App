@@ -3,6 +3,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Terminal } from "lucide-react";
 import CinematicLogo from "../context/Logo";
+// import CinematicLogo from "../context/Logo";
 
 export function Loader({ loading }) {
   const [progress, setProgress] = useState(0);

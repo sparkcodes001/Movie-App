@@ -56,7 +56,7 @@ const Footer = () => {
       localStorage.setItem("vault_access", "granted");
       setHasAccess(true);
 
-      setTimeout(() => navigate("/"), 2500);
+      setTimeout(() => navigate("/home"), 2500);
     } catch (err) {
       console.error("Breach Failed:", err.message);
       setStatus("ERROR");
@@ -165,7 +165,7 @@ const Footer = () => {
                 System_Status: Verified
               </div>
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/home")}
                 className="group/btn relative overflow-hidden bg-white text-black px-8 py-4 font-black uppercase italic tracking-widest text-xs inline-flex items-center gap-3 transition-transform active:scale-95 shadow-xl"
               >
                 <div className="absolute inset-0 z-0 bg-cyan-500 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 ease-out" />

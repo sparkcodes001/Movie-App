@@ -20,7 +20,7 @@ const HeroSec = () => {
 
   const handleAction = () => {
     if (hasAccess) {
-      navigate("/");
+      navigate("/home");
     } else {
       document
         .getElementById("footer-section")
