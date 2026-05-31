@@ -6,6 +6,12 @@ import Navbar from "./components/NavBar";
 import { LandingPage } from "./pages/LandingPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+
+gsap.registerPlugin(ScrollTrigger, useGSAP);
+
 export default function App() {
   const location = useLocation();
   const showNavbar = location.pathname !== "/";

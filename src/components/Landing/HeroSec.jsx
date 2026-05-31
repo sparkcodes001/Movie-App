@@ -10,6 +10,7 @@ const HeroSec = () => {
   const container = useRef();
   const screenRef = useRef();
   const floatItemsRef = useRef([]);
+  const rafRef = useRef(null);
   const navigate = useNavigate();
   const [hasAccess, setHasAccess] = useState(false);
 
@@ -74,25 +75,43 @@ const HeroSec = () => {
 
   const handleMouseMove = (e) => {
     if (!container.current || window.innerWidth < 1024) return;
-    const { clientX, clientY } = e;
-    const { innerWidth, innerHeight } = window;
 
-    const xRotation = (clientY / innerHeight - 0.5) * -10;
-    const yRotation = (clientX / innerWidth - 0.5) * 10;
+    // ✅ Cancel previous frame — prevents queuing
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
-    gsap.to(screenRef.current, {
-      rotateX: xRotation,
-      rotateY: yRotation,
-      duration: 0.8,
-      ease: "power2.out",
-    });
+    rafRef.current = requestAnimationFrame(() => {
+      const { clientX, clientY } = e;
+      const { innerWidth, innerHeight } = window;
 
-    gsap.to(".bg-video", {
-      x: (clientX / innerWidth - 0.5) * 15,
-      y: (clientY / innerHeight - 0.5) * 15,
-      duration: 1,
+      const xRotation = (clientY / innerHeight - 0.5) * -10;
+      const yRotation = (clientX / innerWidth - 0.5) * 10;
+
+      if (screenRef.current) {
+        gsap.to(screenRef.current, {
+          rotateX: xRotation,
+          rotateY: yRotation,
+          duration: 0.8,
+          ease: "power2.out",
+          overwrite: "auto", // ✅ cancel conflicting tweens
+        });
+      }
+
+      gsap.to(".bg-video", {
+        x: (clientX / innerWidth - 0.5) * 15,
+        y: (clientY / innerHeight - 0.5) * 15,
+        duration: 1,
+        overwrite: "auto",
+      });
     });
   };
+
+  // ✅ Also add cleanup in the component
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
 
   return (
     <div
@@ -132,13 +151,6 @@ const HeroSec = () => {
             <span className="text-zinc-600">Network_Latency</span>
             <span className="text-cyan-500">14ms // Secure</span>
           </div>
-          <button
-            onClick={handleAction}
-            className="nav-item flex items-center gap-2 px-5 py-2.5 bg-white text-black hover:bg-cyan-500 hover:text-white transition-all rounded-full font-black text-[10px] uppercase tracking-widest"
-          >
-            {hasAccess ? "Enter Archive" : "Establish Link"}
-            <LogIn size={13} />
-          </button>
         </div>
       </nav>
 

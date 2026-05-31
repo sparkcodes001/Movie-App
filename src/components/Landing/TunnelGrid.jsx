@@ -15,11 +15,19 @@ const TunnelSec = () => {
   });
 
   useEffect(() => {
+    // ✅ Debounced resize to avoid thrashing
+    let timeout;
     const handleResize = () => {
-      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        setDimensions({ width: window.innerWidth, height: window.innerHeight });
+      }, 200);
     };
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -42,42 +50,51 @@ const TunnelSec = () => {
     };
   }, []);
 
-  useGSAP(() => {
-    if (movies.length === 0 || !containerRef.current) return;
+  useGSAP(
+    () => {
+      if (movies.length === 0 || !containerRef.current) return;
 
-    const cards = gsap.utils.toArray(".tunnel-card");
+      // ✅ Store only our own triggers
+      const triggers = [];
+      const cards = gsap.utils.toArray(".tunnel-card");
 
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top top",
-        end: "+=3000",
-        pin: true,
-        scrub: 1,
-        invalidateOnRefresh: true,
-      },
-    });
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top top",
+          end: "+=3000",
+          pin: true,
+          scrub: 1,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
 
-    tl.fromTo(
-      ".tunnel-text",
-      { opacity: 0, scale: 0.85 },
-      { opacity: 1, scale: 1, duration: 1 },
-      0,
-    );
+      triggers.push(tl.scrollTrigger);
 
-    cards.forEach((card, i) => {
       tl.fromTo(
-        card,
-        { z: -3500, opacity: 0 },
-        { z: 600, opacity: 1, ease: "none", duration: 1.5 },
-        i * 0.1,
+        ".tunnel-text",
+        { opacity: 0, scale: 0.85 },
+        { opacity: 1, scale: 1, duration: 1 },
+        0,
       );
-    });
 
-    tl.to(".tunnel-text", { opacity: 0, scale: 1.3, duration: 0.5 }, "-=0.5");
+      cards.forEach((card, i) => {
+        tl.fromTo(
+          card,
+          { z: -3500, opacity: 0 },
+          { z: 600, opacity: 1, ease: "none", duration: 1.5 },
+          i * 0.1,
+        );
+      });
 
-    return () => ScrollTrigger.getAll().forEach((t) => t.kill());
-  }, [movies, dimensions]);
+      tl.to(".tunnel-text", { opacity: 0, scale: 1.3, duration: 0.5 }, "-=0.5");
+
+      // ✅ Only kill our triggers
+      return () => triggers.forEach((t) => t?.kill());
+    },
+    { dependencies: [movies, dimensions] },
+  );
 
   const getRadius = () => {
     if (dimensions.width < 640) return { x: 100, y: 160 };
@@ -130,13 +147,13 @@ const TunnelSec = () => {
           return (
             <div
               key={movie.id}
-              className="tunnel-card absolute w-[100px] sm:w-[160px] md:w-[240px] aspect-[2/3] rounded-lg overflow-hidden border border-white/10 shadow-2xl hover:border-cyan-500/40 transition-colors"
+              className="tunnel-card absolute w-[100px] sm:w-[160px] md:w-[240px] aspect-[2/3] rounded-lg overflow-hidden border border-white/10 shadow-2xl"
               style={{
                 transform: `translate3d(${posX}px, ${posY}px, 0px)`,
               }}
             >
               <img
-                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
                 alt={movie.title}
                 className="w-full h-full object-cover"
                 loading="lazy"

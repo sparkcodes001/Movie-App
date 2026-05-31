@@ -14,7 +14,7 @@ export function LandingPage() {
       <HeroSec />
 
       {/* 02. Movement: Horizontal scroll of trending titles */}
-      <TrendingSec />
+      {/* <TrendingSec /> */}
 
       {/* 03. Interaction: 3D Mouse-tracking detail of a top movie */}
       <SpotlightSec />
