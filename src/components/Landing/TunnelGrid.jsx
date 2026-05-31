@@ -8,6 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const TunnelSec = () => {
   const containerRef = useRef();
+  const stRef = useRef(null);
   const [movies, setMovies] = useState([]);
   const [dimensions, setDimensions] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 1024,
@@ -15,18 +16,17 @@ const TunnelSec = () => {
   });
 
   useEffect(() => {
-    // ✅ Debounced resize to avoid thrashing
-    let timeout;
+    let rafId;
     const handleResize = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
         setDimensions({ width: window.innerWidth, height: window.innerHeight });
-      }, 200);
+      });
     };
     window.addEventListener("resize", handleResize);
     return () => {
-      clearTimeout(timeout);
       window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -54,8 +54,12 @@ const TunnelSec = () => {
     () => {
       if (movies.length === 0 || !containerRef.current) return;
 
-      // ✅ Store only our own triggers
-      const triggers = [];
+      // Kill previous instance
+      if (stRef.current) {
+        stRef.current.kill();
+        stRef.current = null;
+      }
+
       const cards = gsap.utils.toArray(".tunnel-card");
 
       const tl = gsap.timeline({
@@ -65,12 +69,12 @@ const TunnelSec = () => {
           end: "+=3000",
           pin: true,
           scrub: 1,
-          anticipatePin: 1,
           invalidateOnRefresh: true,
+          onEnter: () => ScrollTrigger.refresh(),
         },
       });
 
-      triggers.push(tl.scrollTrigger);
+      stRef.current = tl.scrollTrigger;
 
       tl.fromTo(
         ".tunnel-text",
@@ -90,15 +94,19 @@ const TunnelSec = () => {
 
       tl.to(".tunnel-text", { opacity: 0, scale: 1.3, duration: 0.5 }, "-=0.5");
 
-      // ✅ Only kill our triggers
-      return () => triggers.forEach((t) => t?.kill());
+      return () => {
+        if (stRef.current) {
+          stRef.current.kill();
+          stRef.current = null;
+        }
+      };
     },
     { dependencies: [movies, dimensions] },
   );
 
   const getRadius = () => {
-    if (dimensions.width < 640) return { x: 100, y: 160 };
-    if (dimensions.width < 1024) return { x: 220, y: 270 };
+    if (dimensions.width < 640) return { x: 110, y: 170 };
+    if (dimensions.width < 1024) return { x: 230, y: 280 };
     return { x: 420, y: 330 };
   };
 
@@ -147,7 +155,7 @@ const TunnelSec = () => {
           return (
             <div
               key={movie.id}
-              className="tunnel-card absolute w-[100px] sm:w-[160px] md:w-[240px] aspect-[2/3] rounded-lg overflow-hidden border border-white/10 shadow-2xl"
+              className="tunnel-card absolute w-[90px] sm:w-[150px] md:w-[220px] aspect-[2/3] rounded-lg overflow-hidden border border-white/10 shadow-2xl"
               style={{
                 transform: `translate3d(${posX}px, ${posY}px, 0px)`,
               }}

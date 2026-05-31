@@ -48,7 +48,7 @@ export default function FavoritePage() {
           </div>
 
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/home")}
             className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase italic tracking-widest text-[10px] overflow-hidden active:scale-95 transition-all"
           >
             <div className="absolute inset-0 bg-cyan-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />

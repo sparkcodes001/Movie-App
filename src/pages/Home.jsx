@@ -165,11 +165,12 @@ export default function HomePage() {
     return range;
   };
 
+  // Dropdown panel — full width of its relative parent
   const dropdownPanelClass =
     "absolute top-[calc(100%+4px)] left-0 w-full bg-[#080808] border border-white/10 z-[70] shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-xl max-h-72 overflow-y-auto";
 
   const dropdownItemClass = (active) =>
-    `drop-item flex items-center justify-between px-4 py-3 text-left font-mono text-[9px] uppercase tracking-widest transition-all border-l-2 ${
+    `drop-item flex items-center justify-between px-4 py-3 text-left font-mono text-[9px] uppercase tracking-widest transition-all border-l-2 w-full ${
       active
         ? "border-cyan-500 text-cyan-400 bg-cyan-500/5"
         : "border-transparent text-zinc-500 hover:border-zinc-600 hover:text-white hover:bg-white/5"
@@ -179,7 +180,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#030303] text-white pb-32 selection:bg-cyan-500 selection:text-black">
       <Loader loading={loading} />
 
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
+      {/* ── Header section — full width with side padding ── */}
+      <section className="w-full px-6 md:px-10 lg:px-16 pt-20 pb-12">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 text-cyan-500 mb-4">
@@ -236,13 +238,13 @@ export default function HomePage() {
           <span className="text-zinc-600">pg_{page}</span>
         </div>
 
-        {/* Controls */}
+        {/* ── Controls — full width, genre takes remaining space ── */}
         <div
-          className="flex flex-col lg:flex-row items-stretch gap-3 max-w-5xl"
           ref={dropdownContainerRef}
+          className="flex flex-col lg:flex-row items-stretch gap-3 w-full"
         >
-          {/* Genre */}
-          <div className="relative w-full lg:w-52">
+          {/* Genre — flex-1 so it grows to fill available space */}
+          <div className="relative flex-1 min-w-0">
             <button
               onClick={() =>
                 setActiveDropdown(activeDropdown === "genre" ? null : "genre")
@@ -264,9 +266,12 @@ export default function HomePage() {
               </div>
               <ChevronDown
                 size={13}
-                className={`text-zinc-600 transition-transform duration-300 ${activeDropdown === "genre" ? "rotate-180" : ""}`}
+                className={`text-zinc-600 transition-transform duration-300 ${
+                  activeDropdown === "genre" ? "rotate-180" : ""
+                }`}
               />
             </button>
+
             {activeDropdown === "genre" && (
               <div className={dropdownPanelClass}>
                 {GENRES.map((g) => (
@@ -282,8 +287,8 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Year */}
-          <div className="relative w-full lg:w-40">
+          {/* Year — fixed comfortable width */}
+          <div className="relative w-full lg:w-44 shrink-0">
             <button
               onClick={() =>
                 setActiveDropdown(activeDropdown === "year" ? null : "year")
@@ -305,9 +310,12 @@ export default function HomePage() {
               </div>
               <ChevronDown
                 size={13}
-                className={`text-zinc-600 transition-transform duration-300 ${activeDropdown === "year" ? "rotate-180" : ""}`}
+                className={`text-zinc-600 transition-transform duration-300 ${
+                  activeDropdown === "year" ? "rotate-180" : ""
+                }`}
               />
             </button>
+
             {activeDropdown === "year" && (
               <div className={dropdownPanelClass}>
                 {YEARS.map((y) => (
@@ -323,8 +331,11 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+          {/* Search — fixed comfortable width, does not flex-grow */}
+          <form
+            onSubmit={handleSearch}
+            className="flex gap-2 w-full lg:w-96 shrink-0"
+          >
             <div className="flex-1 bg-[#0a0a0a] border border-white/10 focus-within:border-cyan-500 transition-all flex items-center px-4 gap-3">
               <Search className="text-zinc-600 shrink-0" size={14} />
               <input
@@ -346,7 +357,7 @@ export default function HomePage() {
             </div>
             <button
               type="submit"
-              className="group relative bg-white text-black px-6 font-black uppercase italic tracking-widest text-[10px] flex items-center gap-2 overflow-hidden whitespace-nowrap active:scale-95 transition-all"
+              className="group relative bg-white text-black px-6 font-black uppercase italic tracking-widest text-[10px] flex items-center gap-2 overflow-hidden whitespace-nowrap active:scale-95 transition-all shrink-0"
             >
               <div className="absolute inset-0 bg-cyan-500 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
               <Terminal
@@ -361,10 +372,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Grid */}
+      {/* ── Grid — full width with side padding ── */}
       <main
         ref={gridRef}
-        className="max-w-7xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 min-h-[400px]"
+        className="w-full px-6 md:px-10 lg:px-16 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-5 min-h-[400px]"
       >
         {movies.length > 0
           ? movies.map((movie) => (
@@ -385,7 +396,7 @@ export default function HomePage() {
             )}
       </main>
 
-      {/* Pagination */}
+      {/* ── Pagination ── */}
       {totalPages > 1 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <div className="bg-[#030303]/95 backdrop-blur-2xl border border-white/10 p-1.5 flex items-center gap-1 shadow-2xl pointer-events-auto">
@@ -400,7 +411,11 @@ export default function HomePage() {
             <div className="flex items-center font-mono text-[9px] px-1">
               <button
                 onClick={() => updateURL({ page: 1 })}
-                className={`w-8 h-8 transition-colors ${page === 1 ? "text-cyan-500 font-black bg-cyan-500/10" : "text-zinc-600 hover:text-white"}`}
+                className={`w-8 h-8 transition-colors ${
+                  page === 1
+                    ? "text-cyan-500 font-black bg-cyan-500/10"
+                    : "text-zinc-600 hover:text-white"
+                }`}
               >
                 1
               </button>
@@ -409,7 +424,11 @@ export default function HomePage() {
                 <button
                   key={n}
                   onClick={() => updateURL({ page: n })}
-                  className={`w-8 h-8 transition-colors ${page === n ? "text-cyan-500 font-black bg-cyan-500/10" : "text-zinc-600 hover:text-white"}`}
+                  className={`w-8 h-8 transition-colors ${
+                    page === n
+                      ? "text-cyan-500 font-black bg-cyan-500/10"
+                      : "text-zinc-600 hover:text-white"
+                  }`}
                 >
                   {n}
                 </button>
@@ -420,7 +439,11 @@ export default function HomePage() {
               {totalPages > 1 && (
                 <button
                   onClick={() => updateURL({ page: totalPages })}
-                  className={`w-8 h-8 transition-colors ${page === totalPages ? "text-cyan-500 font-black bg-cyan-500/10" : "text-zinc-600 hover:text-white"}`}
+                  className={`w-8 h-8 transition-colors ${
+                    page === totalPages
+                      ? "text-cyan-500 font-black bg-cyan-500/10"
+                      : "text-zinc-600 hover:text-white"
+                  }`}
                 >
                   {totalPages}
                 </button>
